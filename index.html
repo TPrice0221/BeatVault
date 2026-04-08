@@ -261,6 +261,31 @@ function spawnBall() {
       balls = balls.filter(b => b !== obj);
       return;
     }
+    function randomPerfect() {
+  const lines = [
+    "PERFECT 🔥",
+    "NAILED IT 💎",
+    "LOCKED IN 🎯",
+    "THAT'S IT 😤",
+    "RIGHT ON TIME ⏱️",
+    "CLEAN 🔥",
+    "YOU IN THE POCKET 😮‍🔥"
+  ];
+  return lines[Math.floor(Math.random() * lines.length)];
+}
+
+function randomGood() {
+  const lines = [
+    "Nice 👍",
+    "Good timing 👌",
+    "You cooking 👨‍🍳",
+    "Keep it going 🔥",
+    "Almost perfect 👀",
+    "That’s clean",
+    "We getting there 😏"
+  ];
+  return lines[Math.floor(Math.random() * lines.length)];
+}
 
     requestAnimationFrame(animate);
   }
@@ -284,12 +309,36 @@ function handleInput() {
 
   target.classList.remove("hit", "miss");
 
-  if (diff < 40) {
-    score += 100;
-    streak++;
-    feedback.innerText = "PERFECT 🔥";
-    target.classList.add("hit");
-    best.hit = true;
+   if (diff < 40) {
+  score += 100;
+  streak++;
+
+  feedback.innerText = randomPerfect();
+  target.classList.add("hit");
+  best.hit = true;
+     if (diff < 30) {
+  score += 100;
+  streak++;
+
+  feedback.innerText = randomPerfect();
+  target.classList.add("hit");
+  best.hit = true;
+
+} else if (diff < 70) {
+  score += 50;
+  streak++;
+
+  feedback.innerText = randomGood();
+  target.classList.add("hit");
+  best.hit = true;
+
+} else {
+  streak = 0;
+  feedback.innerText = randomDiss();
+  target.classList.add("miss");
+  best.hit = true;
+     }
+   }
   } else {
     streak = 0;
     feedback.innerText = randomDiss();
