@@ -37,13 +37,13 @@
     /* FEEDBACK TEXT */
     #feedback {
       position: absolute;
-      top: 140px;
-      font-size: 24px;
+      top: 90px;
+      font-size: 26px;
       font-weight: bold;
-      text-shadow: 0 0 10px white;
+      text-shadow: 0 0 15px white;
     }
 
-    /* BIG TARGET */
+    /* TARGET */
     #target {
       width: 180px;
       height: 180px;
@@ -56,39 +56,57 @@
         0 0 25px rgba(255,255,255,0.2),
         inset 0 0 20px rgba(255,255,255,0.1);
 
-      transition: all 0.15s ease;
+      transition: all 0.1s ease;
     }
 
-    /* HIT / MISS GLOW */
     #target.hit {
-      box-shadow:
-        0 0 50px lime,
-        inset 0 0 25px lime;
+      box-shadow: 0 0 60px lime, inset 0 0 25px lime;
     }
 
     #target.miss {
-      box-shadow:
-        0 0 50px red,
-        inset 0 0 25px red;
+      box-shadow: 0 0 60px red, inset 0 0 25px red;
     }
 
-    /* SINGLE FALLING BALL */
+    /* BALL */
     .ball {
-      width: 180px;
-      height: 180px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      border: 2px solid rgba(255,255,255,0.15);
-      box-shadow: 0 0 15px rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.4);
+      box-shadow: 0 0 20px rgba(255,255,255,0.5);
     }
 
+    .ball.missed {
+      background: rgba(255,0,0,0.4);
+      box-shadow: 0 0 25px red;
+    }
+
+    /* START BUTTON */
     button {
-      margin-top: 30px;
+      position: absolute;
+      bottom: 40px;
       padding: 12px 20px;
       border-radius: 8px;
       border: none;
+    }
+
+    /* PUNISHMENT FLASH */
+    #flash {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: rgba(255,0,0,0.2);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #flash.active {
+      opacity: 1;
+      transition: opacity 0.1s;
     }
   </style>
 </head>
@@ -108,6 +126,8 @@
 
   <button onclick="startGame()">Start</button>
 
+  <div id="flash"></div>
+
 </div>
 
 <audio id="beat" src="beat.mp3"></audio>
@@ -120,11 +140,11 @@ let gameStarted = false;
 let score = 0;
 let streak = 0;
 
-let currentBall = null;
+let balls = [];
 let targetY = 0;
 
-let perfectWindow = 40;
-let goodWindow = 80;
+let perfectWindow = 30;
+let goodWindow = 70;
 
 function startGame() {
   if (gameStarted) return;
@@ -146,17 +166,17 @@ function spawnLoop() {
 }
 
 function spawnBall() {
-  if (currentBall) return;
-
   let ball = document.createElement("div");
   ball.classList.add("ball");
-  ball.style.top = "-200px";
+  ball.style.top = "-100px";
 
   document.body.appendChild(ball);
-  currentBall = ball;
 
   let startTime = Date.now();
   let duration = beatInterval;
+
+  let obj = { el: ball, hit: false };
+  balls.push(obj);
 
   function animate() {
     let now = Date.now();
@@ -164,6 +184,17 @@ function spawnBall() {
 
     if (progress >= 1) {
       ball.style.top = targetY + "px";
+
+      if (!obj.hit) {
+        ball.classList.add("missed");
+        punish();
+      }
+
+      setTimeout(() => {
+        ball.remove();
+        balls = balls.filter(b => b !== obj);
+      }, 300);
+
       return;
     }
 
@@ -177,45 +208,75 @@ function spawnBall() {
 }
 
 function handleInput() {
-  if (!currentBall) return;
+  if (!balls.length) return;
 
-  let ballY = currentBall.getBoundingClientRect().top;
-  let diff = Math.abs(ballY - targetY);
-
-  let feedback = document.getElementById("feedback");
   let target = document.getElementById("target");
+  let feedback = document.getElementById("feedback");
+
+  let best = null;
+  let smallestDiff = Infinity;
+
+  balls.forEach(b => {
+    let y = b.el.getBoundingClientRect().top;
+    let diff = Math.abs(y - targetY);
+
+    if (diff < smallestDiff) {
+      smallestDiff = diff;
+      best = b;
+    }
+  });
+
+  if (!best) return;
 
   target.classList.remove("hit", "miss");
 
-  if (diff < perfectWindow) {
+  if (smallestDiff < perfectWindow) {
     score += 100;
-    streak += 1;
+    streak++;
     feedback.innerText = "PERFECT 🔥";
     target.classList.add("hit");
+    best.hit = true;
 
-  } else if (diff < goodWindow) {
+  } else if (smallestDiff < goodWindow) {
     score += 50;
-    streak += 1;
+    streak++;
     feedback.innerText = "Good 👍";
     target.classList.add("hit");
+    best.hit = true;
 
   } else {
     streak = 0;
-
-    let insults = ["ahh man", "oops", "do you even produce?"];
-    feedback.innerText = insults[Math.floor(Math.random() * insults.length)];
-
+    feedback.innerText = randomInsult();
     target.classList.add("miss");
+    punish();
   }
+
+  // impact scale
+  target.style.transform = "scale(1.1)";
+  setTimeout(() => target.style.transform = "scale(1)", 100);
 
   document.getElementById("score").innerText = "Score: " + score;
   document.getElementById("streak").innerText = "Streak: " + streak;
+}
+
+function punish() {
+  let flash = document.getElementById("flash");
+  flash.classList.add("active");
 
   setTimeout(() => {
-    target.classList.remove("hit", "miss");
-    currentBall?.remove();
-    currentBall = null;
-  }, 150);
+    flash.classList.remove("active");
+  }, 100);
+}
+
+function randomInsult() {
+  let lines = [
+    "ahh man",
+    "oops",
+    "do you even produce?",
+    "off beat bro 😭",
+    "come on now..."
+  ];
+  return lines[Math.floor(Math.random() * lines.length)];
 }
 
 document.addEventListener("click", handleInput);
