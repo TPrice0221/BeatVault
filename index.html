@@ -4,62 +4,102 @@
   <title>Beat Tap Game</title>
 </head>
 
-<body style="text-align:center; font-family:sans-serif; background:#111; color:white;">
+<body style="text-align:center; font-family:sans-serif; background:#111; color:white; transition:0.1s;">
 
   <h1>Tap On Beat 🎧</h1>
-  <p>Tap when the screen flashes green</p>
+  <p>Build a streak by tapping in rhythm</p>
 
   <button onclick="tap()" style="font-size:24px; padding:20px;">TAP</button>
 
   <h2 id="score">Score: 0</h2>
+  <h3 id="streak">Streak: 0</h3>
 
-  <audio id="beat" src="https://open.spotify.com/album/4m6yQKW51N69hN3vCDIfgR?si=e8Kw9sbPSeOLpx5sfgMSWA>
+  <!-- Popup -->
+  <div id="popup" style="
+    display:none;
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    background:#222;
+    padding:30px;
+    border-radius:10px;
+    text-align:center;
+    box-shadow:0 0 20px rgba(0,0,0,0.8);
+  ">
+    <h2>🔥 You unlocked a sound pack!</h2>
+    <p>Nice timing… you might actually have rhythm.</p>
+    <button onclick="closePopup()" style="padding:10px 20px; margin-top:10px;">Claim</button>
+  </div>
+
+  <!-- YOUR BEAT FILE -->
+  <audio id="beat" src="beat.mp3" loop></audio>
+
   <script>
     let score = 0;
+    let streak = 0;
     let beat = false;
-    let won = false;
     let started = false;
+    let won = false;
 
     const audio = document.getElementById("beat");
 
-    function startBeat() {
+    function startGame() {
+      audio.play().catch(() => {});
+
       setInterval(() => {
         beat = true;
-
-        audio.currentTime = 0;
-        audio.play();
 
         document.body.style.background = "#1db954";
 
         setTimeout(() => {
           beat = false;
           document.body.style.background = "#111";
-        }, 300);
+        }, 300); // timing window
 
-      }, 1000);
+      }, 1000); // tempo (we can sync this later)
     }
 
     function tap() {
-      // Start audio loop on first tap
+
+      // First tap starts audio
       if (!started) {
         started = true;
-        startBeat();
+        startGame();
       }
 
       if (beat) {
         score++;
+        streak++;
+
+        // Visual success feedback
+        document.body.style.background = "#00ff88";
+
       } else {
         score = Math.max(0, score - 1);
+        streak = 0;
+
+        // Visual fail feedback
+        document.body.style.background = "#ff4444";
       }
+
+      // Reset color quickly
+      setTimeout(() => {
+        document.body.style.background = "#111";
+      }, 100);
 
       document.getElementById("score").innerText = "Score: " + score;
+      document.getElementById("streak").innerText = "Streak: " + streak;
 
-      if (score >= 10 && !won) {
+      // Win condition
+      if (score >= 15 && !won) {
         won = true;
-        setTimeout(() => {
-          alert("🔥 You unlocked a sound pack!");
-        }, 100);
+        document.getElementById("popup").style.display = "block";
       }
+    }
+
+    function closePopup() {
+      document.getElementById("popup").style.display = "none";
     }
   </script>
 
