@@ -23,7 +23,6 @@
 
     h1 { margin-bottom: 10px; }
 
-    /* FEEDBACK */
     #feedback {
       position: absolute;
       top: 120px;
@@ -31,10 +30,8 @@
       font-size: 28px;
       font-weight: bold;
       text-shadow: 0 0 20px white;
-      pointer-events: none;
     }
 
-    /* CENTER HOLDER */
     #targetWrapper {
       position: fixed;
       top: 50%;
@@ -42,7 +39,6 @@
       transform: translate(-50%, -50%);
     }
 
-    /* TARGET */
     #target {
       width: 180px;
       height: 180px;
@@ -62,7 +58,6 @@
       box-shadow: 0 0 70px red, inset 0 0 30px red;
     }
 
-    /* BALL */
     .ball {
       width: 180px;
       height: 180px;
@@ -80,44 +75,25 @@
       box-shadow: 0 0 40px red;
     }
 
-    /* BOTTOM UI */
     #bottomUI {
       position: fixed;
       bottom: 20px;
       width: 100%;
-      font-size: 18px;
     }
 
-    /* START BUTTON */
-    #startBtn {
+    button {
       position: fixed;
       bottom: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 14px 28px;
-      font-size: 18px;
+      padding: 12px 20px;
       border-radius: 10px;
       border: none;
       z-index: 20;
-      #stopBtn, #restartBtn {
-  position: fixed;
-  bottom: 80px;
-  padding: 12px 20px;
-  border-radius: 10px;
-  border: none;
-  z-index: 20;
-}
-
-#stopBtn {
-  left: 20%;
-}
-
-#restartBtn {
-  right: 20%;
-}
     }
 
-    /* FLASH */
+    #startBtn { left: 50%; transform: translateX(-50%); }
+    #stopBtn { left: 20%; display:none; }
+    #restartBtn { right: 20%; display:none; }
+
     #flash {
       position: fixed;
       width: 100%;
@@ -132,7 +108,6 @@
       transition: opacity 0.1s;
     }
 
-    /* BEAT INFO */
     #beatInfo {
       position: fixed;
       bottom: 10px;
@@ -161,8 +136,9 @@
 </div>
 
 <button id="startBtn" onclick="startGame()">Start</button>
-<button id="stopBtn" onclick="stopGame()" style="display:none;">Stop</button>
-<button id="restartBtn" onclick="restartGame()" style="display:none;">Restart</button>
+<button id="stopBtn" onclick="stopGame()">Stop</button>
+<button id="restartBtn" onclick="restartGame()">Restart</button>
+
 <div id="flash"></div>
 
 <div id="beatInfo">
@@ -183,10 +159,6 @@ let streak = 0;
 let balls = [];
 let targetCenter = 0;
 
-let perfectWindow = 40;
-let goodWindow = 80;
-
-let lastTap = 0;
 let spawnTimeout;
 
 function startGame() {
@@ -194,6 +166,8 @@ function startGame() {
   gameStarted = true;
 
   document.getElementById("startBtn").style.display = "none";
+  document.getElementById("stopBtn").style.display = "block";
+  document.getElementById("restartBtn").style.display = "none";
 
   let target = document.getElementById("target");
   let rect = target.getBoundingClientRect();
@@ -202,17 +176,59 @@ function startGame() {
   let audio = document.getElementById("beat");
   audio.currentTime = 0;
   audio.play();
-
   audio.onended = endGame;
 
   spawnLoop();
+}
+
+function stopGame() {
+  gameStarted = false;
+
+  clearTimeout(spawnTimeout);
+
+  let audio = document.getElementById("beat");
+  audio.pause();
+
+  balls.forEach(b => b.el.remove());
+  balls = [];
+
+  document.getElementById("startBtn").style.display = "block";
+  document.getElementById("stopBtn").style.display = "none";
+  document.getElementById("restartBtn").style.display = "block";
+
+  document.getElementById("feedback").innerText = "Stopped ⏹";
+}
+
+function restartGame() {
+  score = 0;
+  streak = 0;
+
+  updateUI();
+
+  document.getElementById("feedback").innerText = "";
+
+  startGame();
+}
+
+function endGame() {
+  gameStarted = false;
+
+  clearTimeout(spawnTimeout);
+
+  balls.forEach(b => b.el.remove());
+  balls = [];
+
+  document.getElementById("startBtn").style.display = "block";
+  document.getElementById("stopBtn").style.display = "none";
+  document.getElementById("restartBtn").style.display = "block";
+
+  document.getElementById("feedback").innerText = "Song Finished 🎵";
 }
 
 function spawnLoop() {
   if (!gameStarted) return;
 
   spawnBall();
-
   spawnTimeout = setTimeout(spawnLoop, beatInterval);
 }
 
@@ -240,11 +256,10 @@ function spawnBall() {
     let rect = ball.getBoundingClientRect();
     let center = rect.top + rect.height / 2;
 
-    if (!obj.hit && center > targetCenter + goodWindow) {
+    if (!obj.hit && center > targetCenter + 80) {
       obj.hit = true;
       ball.classList.add("missed");
       streak = 0;
-      punish();
       updateUI();
     }
 
@@ -261,87 +276,33 @@ function spawnBall() {
 }
 
 function handleInput() {
-  let now = Date.now();
-  if (now - lastTap < 200) return;
-  lastTap = now;
-
   if (!balls.length) return;
 
   let target = document.getElementById("target");
   let feedback = document.getElementById("feedback");
 
-  let best = null;
-  let smallestDiff = Infinity;
+  let best = balls[0];
 
-  balls.forEach(b => {
-    let rect = b.el.getBoundingClientRect();
-    let center = rect.top + rect.height / 2;
-    let diff = Math.abs(center - targetCenter);
+  let rect = best.el.getBoundingClientRect();
+  let center = rect.top + rect.height / 2;
+  let diff = Math.abs(center - targetCenter);
 
-    if (diff < smallestDiff) {
-      smallestDiff = diff;
-      best = b;
-    }
-    function stopGame() {
-  gameStarted = false;
+  if (best.hit) return;
 
-  clearTimeout(spawnTimeout);
-
-  let audio = document.getElementById("beat");
-  audio.pause();
-
-  balls.forEach(b => b.el.remove());
-  balls = [];
-
-  document.getElementById("startBtn").style.display = "block";
-  document.getElementById("stopBtn").style.display = "none";
-  document.getElementById("restartBtn").style.display = "block";
-
-  document.getElementById("feedback").innerText = "Stopped ⏹";
-    }
-    function restartGame() {
-  score = 0;
-  streak = 0;
-
-  updateUI();
-
-  document.getElementById("feedback").innerText = "";
-
-  document.getElementById("restartBtn").style.display = "none";
-
-  startGame();
-    }
-  });
-
-  if (!best || best.hit) return;
-
-  target.classList.remove("hit", "miss");
-
-  if (smallestDiff < perfectWindow) {
+  if (diff < 40) {
     score += 100;
     streak++;
     feedback.innerText = "PERFECT 🔥";
     target.classList.add("hit");
     best.hit = true;
-
-  } else if (smallestDiff < goodWindow) {
-    score += 50;
-    streak++;
-    feedback.innerText = "Good 👍";
-    target.classList.add("hit");
-    best.hit = true;
-
   } else {
     streak = 0;
-    feedback.innerText = randomInsult();
+    feedback.innerText = "Miss 😭";
     target.classList.add("miss");
     best.hit = true;
-    punish();
   }
 
-  /* SAFE SCALE (no movement) */
-  target.style.transform = "scale(1.1)";
-  setTimeout(() => target.style.transform = "scale(1)", 100);
+  setTimeout(() => target.classList.remove("hit","miss"), 100);
 
   updateUI();
 }
@@ -351,46 +312,7 @@ function updateUI() {
   document.getElementById("streak").innerText = "Streak: " + streak;
 }
 
-function punish() {
-  let flash = document.getElementById("flash");
-  flash.classList.add("active");
-  setTimeout(() => flash.classList.remove("active"), 100);
-}
-
-function randomInsult() {
-  let lines = [
-    "ahh man",
-    "too late bro",
-    "do you even produce?",
-    "off beat 😭",
-    "Imagine...",
-    "Grandma got more rhythm",
-    "ummmm....",
-    "Like fr though?",
-    "I don't think you're cut out for this",
-    "Just stop 🛑",
-    "Again?",
-    "Sure just hit it whenever...",
-    "Im glad this isn't live"
-  ];
-  return lines[Math.floor(Math.random() * lines.length)];
-}
-
 document.addEventListener("pointerdown", handleInput);
-
-function endGame() {
-  gameStarted = false;
-
-  clearTimeout(spawnTimeout);
-
-  balls.forEach(b => b.el.remove());
-  balls = [];
-
-  document.getElementById("startBtn").style.display = "block";
-  document.getElementById("feedback").innerText = "Song Finished 🎵";
-  document.getElementById("restartBtn").style.display = "block";
-document.getElementById("stopBtn").style.display = "none";
-}
 </script>
 
 </body>
