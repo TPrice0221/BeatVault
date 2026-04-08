@@ -20,25 +20,9 @@
       position: relative;
       padding-top: 30px;
     }
-function endGame() {
-  gameStarted = false;
 
-  // stop spawning
-  clearTimeout(spawnTimeout);
-
-  // remove all balls
-  balls.forEach(b => b.el.remove());
-  balls = [];
-
-  // show button again
-  document.getElementById("startBtn").style.display = "block";
-
-  // message
-  document.getElementById("feedback").innerText = "Song Finished 🎵";
-}
     h1 { margin-bottom: 10px; }
 
-    /* TOP FEEDBACK */
     #feedback {
       position: absolute;
       top: 80px;
@@ -49,7 +33,6 @@ function endGame() {
       pointer-events: none;
     }
 
-    /* TARGET */
     #target {
       width: 180px;
       height: 180px;
@@ -70,7 +53,6 @@ function endGame() {
       box-shadow: 0 0 70px red, inset 0 0 30px red;
     }
 
-    /* BALL (SAME SIZE) */
     .ball {
       width: 180px;
       height: 180px;
@@ -88,7 +70,6 @@ function endGame() {
       box-shadow: 0 0 40px red;
     }
 
-    /* BOTTOM UI */
     #bottomUI {
       position: fixed;
       bottom: 20px;
@@ -96,7 +77,6 @@ function endGame() {
       font-size: 18px;
     }
 
-    /* START BUTTON */
     #startBtn {
       position: fixed;
       bottom: 80px;
@@ -109,7 +89,6 @@ function endGame() {
       z-index: 20;
     }
 
-    /* FLASH */
     #flash {
       position: fixed;
       width: 100%;
@@ -161,6 +140,9 @@ let goodWindow = 80;
 
 let lastTap = 0;
 
+/* IMPORTANT: track timeout */
+let spawnTimeout;
+
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
@@ -174,21 +156,21 @@ function startGame() {
   let audio = document.getElementById("beat");
   audio.currentTime = 0;
   audio.play();
+
+  /* STOP GAME WHEN SONG ENDS */
   audio.onended = endGame;
 
   spawnLoop();
 }
 
 function spawnLoop() {
-  spawnBall();
-  let spawnTimeout;
-
-function spawnLoop() {
   if (!gameStarted) return;
 
   spawnBall();
-  spawnTimeout = setTimeout(spawnLoop, beatInterval);
-}
+
+  spawnTimeout = setTimeout(() => {
+    spawnLoop();
+  }, beatInterval);
 }
 
 function spawnBall() {
@@ -215,7 +197,7 @@ function spawnBall() {
     let rect = ball.getBoundingClientRect();
     let center = rect.top + rect.height / 2;
 
-    // LATE MISS (passes target)
+    /* LATE MISS */
     if (!obj.hit && center > targetCenter + goodWindow) {
       obj.hit = true;
       ball.classList.add("missed");
@@ -313,7 +295,21 @@ function randomInsult() {
   return lines[Math.floor(Math.random() * lines.length)];
 }
 
+/* INPUT */
 document.addEventListener("pointerdown", handleInput);
+
+/* END GAME CLEANLY */
+function endGame() {
+  gameStarted = false;
+
+  clearTimeout(spawnTimeout);
+
+  balls.forEach(b => b.el.remove());
+  balls = [];
+
+  document.getElementById("startBtn").style.display = "block";
+  document.getElementById("feedback").innerText = "Song Finished 🎵";
+}
 </script>
 
 </body>
