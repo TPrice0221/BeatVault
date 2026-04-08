@@ -20,7 +20,22 @@
       position: relative;
       padding-top: 30px;
     }
+function endGame() {
+  gameStarted = false;
 
+  // stop spawning
+  clearTimeout(spawnTimeout);
+
+  // remove all balls
+  balls.forEach(b => b.el.remove());
+  balls = [];
+
+  // show button again
+  document.getElementById("startBtn").style.display = "block";
+
+  // message
+  document.getElementById("feedback").innerText = "Song Finished 🎵";
+}
     h1 { margin-bottom: 10px; }
 
     /* TOP FEEDBACK */
@@ -159,13 +174,21 @@ function startGame() {
   let audio = document.getElementById("beat");
   audio.currentTime = 0;
   audio.play();
+  audio.onended = endGame;
 
   spawnLoop();
 }
 
 function spawnLoop() {
   spawnBall();
-  setTimeout(spawnLoop, beatInterval);
+  let spawnTimeout;
+
+function spawnLoop() {
+  if (!gameStarted) return;
+
+  spawnBall();
+  spawnTimeout = setTimeout(spawnLoop, beatInterval);
+}
 }
 
 function spawnBall() {
