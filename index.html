@@ -13,38 +13,34 @@
       color: white;
       font-family: Arial;
       text-align: center;
-      /* REMOVED touch-action + overflow lock */
     }
 
     #overlay {
       background: rgba(0,0,0,0.6);
       min-height: 100vh;
-      padding-top: 30px;
       position: relative;
+      padding-top: 30px;
     }
 
     h1 { margin-bottom: 10px; }
 
-    #score, #streak {
-      margin: 5px;
-      font-size: 18px;
-    }
-
+    /* FEEDBACK (TOP) */
     #feedback {
       position: absolute;
-      top: 90px;
+      top: 80px;
       width: 100%;
-      font-size: 26px;
+      font-size: 28px;
       font-weight: bold;
-      text-shadow: 0 0 15px white;
+      text-shadow: 0 0 20px white;
       pointer-events: none;
     }
 
+    /* TARGET */
     #target {
       width: 180px;
       height: 180px;
       border-radius: 50%;
-      margin: 40px auto;
+      margin: 80px auto;
 
       border: 3px solid rgba(255,255,255,0.2);
       box-shadow:
@@ -55,13 +51,14 @@
     }
 
     #target.hit {
-      box-shadow: 0 0 60px lime, inset 0 0 25px lime;
+      box-shadow: 0 0 70px lime, inset 0 0 30px lime;
     }
 
     #target.miss {
-      box-shadow: 0 0 60px red, inset 0 0 25px red;
+      box-shadow: 0 0 70px red, inset 0 0 30px red;
     }
 
+    /* BALL */
     .ball {
       width: 80px;
       height: 80px;
@@ -80,15 +77,23 @@
       box-shadow: 0 0 25px red;
     }
 
+    /* BOTTOM UI */
+    #bottomUI {
+      position: fixed;
+      bottom: 20px;
+      width: 100%;
+      font-size: 18px;
+    }
+
     button {
       position: fixed;
-      bottom: 40px;
+      bottom: 80px;
       left: 50%;
       transform: translateX(-50%);
       padding: 12px 20px;
       border-radius: 8px;
       border: none;
-      z-index: 20;
+      z-index: 10;
     }
 
     #flash {
@@ -113,13 +118,15 @@
 
   <h1>Stay On Beat</h1>
 
-  <div id="score">Score: 0</div>
-  <div id="streak">Streak: 0</div>
-
   <div id="feedback"></div>
 
   <div id="target"></div>
 
+</div>
+
+<div id="bottomUI">
+  <div id="score">Score: 0</div>
+  <div id="streak">Streak: 0</div>
 </div>
 
 <button onclick="startGame()">Start</button>
@@ -142,6 +149,9 @@ let targetY = 0;
 let perfectWindow = 30;
 let goodWindow = 70;
 
+/* PREVENT DOUBLE INPUT */
+let lastTap = 0;
+
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
@@ -149,7 +159,8 @@ function startGame() {
   document.querySelector("button").style.display = "none";
 
   let target = document.getElementById("target");
-  targetY = target.getBoundingClientRect().top;
+  let rect = target.getBoundingClientRect();
+  targetY = rect.top + rect.height / 2;
 
   let audio = document.getElementById("beat");
   audio.currentTime = 0;
@@ -180,7 +191,7 @@ function spawnBall() {
     let now = Date.now();
     let progress = (now - startTime) / duration;
 
-    let y = progress * targetY;
+    let y = progress * (targetY - 40); // CENTER ALIGN FIX
     ball.style.top = y + "px";
 
     if (progress >= 1) {
@@ -204,6 +215,10 @@ function spawnBall() {
 }
 
 function handleInput() {
+  let now = Date.now();
+  if (now - lastTap < 200) return; // PREVENT DOUBLE COUNT
+  lastTap = now;
+
   if (!balls.length) return;
 
   let target = document.getElementById("target");
@@ -213,8 +228,10 @@ function handleInput() {
   let smallestDiff = Infinity;
 
   balls.forEach(b => {
-    let y = b.el.getBoundingClientRect().top;
-    let diff = Math.abs(y - targetY);
+    let rect = b.el.getBoundingClientRect();
+    let ballCenter = rect.top + rect.height / 2;
+
+    let diff = Math.abs(ballCenter - targetY);
 
     if (diff < smallestDiff) {
       smallestDiff = diff;
@@ -258,9 +275,7 @@ function punish() {
   let flash = document.getElementById("flash");
   flash.classList.add("active");
 
-  setTimeout(() => {
-    flash.classList.remove("active");
-  }, 100);
+  setTimeout(() => flash.classList.remove("active"), 100);
 }
 
 function randomInsult() {
@@ -273,8 +288,7 @@ function randomInsult() {
   return lines[Math.floor(Math.random() * lines.length)];
 }
 
-document.addEventListener("click", handleInput);
-document.addEventListener("touchstart", handleInput);
+document.addEventListener("pointerdown", handleInput);
 </script>
 
 </body>
