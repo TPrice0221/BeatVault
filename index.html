@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Beat Tap Game</title>
+</head>
+<body style="text-align:center; font-family:sans-serif; background:#111; color:white;">
+
+  <h1>Tap On Beat 🎧</h1>
+  <p>Try to tap when the beat hits</p>
+
+  <button onclick="tap()" style="font-size:24px; padding:20px;">TAP</button>
+
+  <h2 id="score">Score: 0</h2>
+
+  <script>
+    let score = 0;
+    let beat = false;
+
+    setInterval(() => {
+      beat = true;
+      document.body.style.background = "#1db954"; // green flash
+      setTimeout(() => {
+        beat = false;
+        document.body.style.background = "#111";
+      }, 300);
+    }, 1000);
+
+    function tap() {
+      if (beat) {
+        score++;
+      } else {
+        score = Math.max(0, score - 1);
+      }
+      document.getElementById("score").innerText = "Score: " + score;
+    }
+  </script>
+
+</body>
+</html>
