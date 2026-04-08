@@ -3,7 +3,6 @@
 <head>
   <title>On Beat Game</title>
 
-  <!-- Stops mobile zoom -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
   <style>
@@ -22,8 +21,21 @@
       border-radius: 50%;
       margin: 100px auto;
       position: relative;
+      transition: background 0.15s, box-shadow 0.15s;
     }
 
+    /* SOLID HIT / MISS FEEDBACK */
+    #circle.hit {
+      background: #00ff88;
+      box-shadow: 0 0 25px #00ff88;
+    }
+
+    #circle.miss {
+      background: #ff0033;
+      box-shadow: 0 0 25px #ff0033;
+    }
+
+    /* Expanding wave */
     .wave {
       position: absolute;
       top: 50%;
@@ -80,12 +92,11 @@
 
 <script>
 let bpm = 167;
-
-// HALFTIME = slower hits
-let beatInterval = (60000 / bpm) * 2;
+let beatInterval = (60000 / bpm) * 2; // halftime
 
 let lastBeatTime = 0;
 let gameStarted = false;
+let canHit = true;
 
 let score = 0;
 let streak = 0;
@@ -106,8 +117,9 @@ function startGame() {
 
 function runBeatLoop() {
   lastBeatTime = Date.now();
+  canHit = true;
 
-  spawnWave("white"); // beat indicator
+  spawnWave("white");
 
   setTimeout(runBeatLoop, beatInterval);
 }
@@ -126,8 +138,19 @@ function spawnWave(color) {
   }, 700);
 }
 
+function flashCircle(type) {
+  let circle = document.getElementById("circle");
+
+  circle.classList.remove("hit", "miss");
+  circle.classList.add(type);
+
+  setTimeout(() => {
+    circle.classList.remove(type);
+  }, 150);
+}
+
 function handleInput() {
-  if (!gameStarted) return;
+  if (!gameStarted || !canHit) return;
 
   let now = Date.now();
   let diff = Math.abs(now - lastBeatTime);
@@ -138,25 +161,32 @@ function handleInput() {
     score += 100;
     streak += 1;
     feedback.innerText = "Perfect";
+
     spawnWave("lime");
+    flashCircle("hit");
 
   } else if (diff < goodWindow) {
     score += 50;
     streak += 1;
     feedback.innerText = "Good";
+
     spawnWave("lime");
+    flashCircle("hit");
 
   } else {
     streak = 0;
     feedback.innerText = "Miss";
+
     spawnWave("red");
+    flashCircle("miss");
   }
+
+  canHit = false;
 
   document.getElementById("score").innerText = "Score: " + score;
   document.getElementById("streak").innerText = "Streak: " + streak;
 }
 
-// CLICK + TAP SUPPORT (without zoom garbage)
 document.addEventListener("click", handleInput);
 document.addEventListener("touchstart", handleInput);
 </script>
