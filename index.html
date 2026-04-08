@@ -15,7 +15,7 @@
       height: 150px;
       background: red;
       border-radius: 50%;
-      margin: 100px auto;
+      margin: 60px auto;
       transition: transform 0.1s, background 0.1s;
     }
 
@@ -34,6 +34,26 @@
       transform: scale(0.8);
     }
 
+    #barContainer {
+      width: 80%;
+      height: 10px;
+      background: #222;
+      margin: 20px auto;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    #bar {
+      width: 0%;
+      height: 100%;
+      background: cyan;
+    }
+
+    #score, #streak, #feedback {
+      font-size: 20px;
+      margin-top: 10px;
+    }
+
     button {
       padding: 12px 20px;
       font-size: 16px;
@@ -48,6 +68,14 @@
 
 <div id="circle"></div>
 
+<div id="barContainer">
+  <div id="bar"></div>
+</div>
+
+<div id="score">Score: 0</div>
+<div id="streak">Streak: 0</div>
+<div id="feedback">...</div>
+
 <button onclick="startGame()">Start</button>
 
 <audio id="beat" src="beat.mp3"></audio>
@@ -55,9 +83,13 @@
 <script>
 let bpm = 167;
 let beatInterval = 60000 / bpm;
-let lastBeatTime = 0;
 
-let tolerance = 120; // ms window (adjust feel here)
+let lastBeatTime = 0;
+let score = 0;
+let streak = 0;
+
+let perfectWindow = 60;
+let goodWindow = 130;
 
 function startGame() {
   let audio = document.getElementById("beat");
@@ -67,7 +99,6 @@ function startGame() {
   setInterval(() => {
     let circle = document.getElementById("circle");
 
-    // Pulse BEFORE beat (anticipation cue)
     circle.classList.add("pulse");
 
     setTimeout(() => {
@@ -76,6 +107,13 @@ function startGame() {
 
     lastBeatTime = Date.now();
   }, beatInterval);
+
+  // Progress bar animation
+  setInterval(() => {
+    let now = Date.now();
+    let progress = (now - lastBeatTime) / beatInterval;
+    document.getElementById("bar").style.width = (progress * 100) + "%";
+  }, 16);
 }
 
 document.addEventListener("click", () => {
@@ -83,23 +121,34 @@ document.addEventListener("click", () => {
   let diff = Math.abs(now - lastBeatTime);
 
   let circle = document.getElementById("circle");
+  let feedback = document.getElementById("feedback");
 
-  if (diff < tolerance) {
-    circle.classList.remove("miss");
+  if (diff < perfectWindow) {
+    score += 100;
+    streak += 1;
+    feedback.innerText = "Perfect";
+
     circle.classList.add("hit");
+    setTimeout(() => circle.classList.remove("hit"), 150);
 
-    setTimeout(() => {
-      circle.classList.remove("hit");
-    }, 150);
+  } else if (diff < goodWindow) {
+    score += 50;
+    streak += 1;
+    feedback.innerText = "Good";
+
+    circle.classList.add("hit");
+    setTimeout(() => circle.classList.remove("hit"), 150);
 
   } else {
-    circle.classList.remove("hit");
-    circle.classList.add("miss");
+    streak = 0;
+    feedback.innerText = "Miss";
 
-    setTimeout(() => {
-      circle.classList.remove("miss");
-    }, 150);
+    circle.classList.add("miss");
+    setTimeout(() => circle.classList.remove("miss"), 150);
   }
+
+  document.getElementById("score").innerText = "Score: " + score;
+  document.getElementById("streak").innerText = "Streak: " + streak;
 });
 </script>
 
