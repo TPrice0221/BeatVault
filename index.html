@@ -2,12 +2,17 @@
 <html>
 <head>
   <title>On Beat Game</title>
+
+  <!-- Stops mobile zoom -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
   <style>
     body {
       background: black;
       color: white;
       text-align: center;
       font-family: Arial;
+      touch-action: manipulation;
     }
 
     #circle {
@@ -15,11 +20,10 @@
       height: 150px;
       background: #111;
       border-radius: 50%;
-      margin: 120px auto;
+      margin: 100px auto;
       position: relative;
     }
 
-    /* Expanding glow */
     .wave {
       position: absolute;
       top: 50%;
@@ -33,7 +37,7 @@
     }
 
     .wave.animate {
-      animation: expand 0.36s linear;
+      animation: expand 0.7s linear;
     }
 
     @keyframes expand {
@@ -42,9 +46,14 @@
         opacity: 0.8;
       }
       100% {
-        transform: translate(-50%, -50%) scale(2.5);
+        transform: translate(-50%, -50%) scale(2.8);
         opacity: 0;
       }
+    }
+
+    #score, #streak, #feedback {
+      font-size: 20px;
+      margin-top: 10px;
     }
 
     button {
@@ -61,21 +70,31 @@
 
 <div id="circle"></div>
 
+<div id="score">Score: 0</div>
+<div id="streak">Streak: 0</div>
+<div id="feedback">...</div>
+
 <button onclick="startGame()">Start</button>
 
 <audio id="beat" src="beat.mp3"></audio>
 
 <script>
 let bpm = 167;
-let beatInterval = 60000 / bpm;
+
+// HALFTIME = slower hits
+let beatInterval = (60000 / bpm) * 2;
 
 let lastBeatTime = 0;
 let gameStarted = false;
 
-let perfectWindow = 80;
+let score = 0;
+let streak = 0;
+
+let perfectWindow = 120;
+let goodWindow = 220;
 
 function startGame() {
-  if (gameStarted) return; // STOP MULTIPLE STARTS
+  if (gameStarted) return;
   gameStarted = true;
 
   let audio = document.getElementById("beat");
@@ -86,10 +105,9 @@ function startGame() {
 }
 
 function runBeatLoop() {
-  let now = Date.now();
-  lastBeatTime = now;
+  lastBeatTime = Date.now();
 
-  spawnWave("white"); // neutral beat pulse
+  spawnWave("white"); // beat indicator
 
   setTimeout(runBeatLoop, beatInterval);
 }
@@ -105,21 +123,42 @@ function spawnWave(color) {
 
   setTimeout(() => {
     wave.remove();
-  }, 400);
+  }, 700);
 }
 
-document.addEventListener("click", () => {
+function handleInput() {
   if (!gameStarted) return;
 
   let now = Date.now();
   let diff = Math.abs(now - lastBeatTime);
 
+  let feedback = document.getElementById("feedback");
+
   if (diff < perfectWindow) {
-    spawnWave("lime"); // ON BEAT
+    score += 100;
+    streak += 1;
+    feedback.innerText = "Perfect";
+    spawnWave("lime");
+
+  } else if (diff < goodWindow) {
+    score += 50;
+    streak += 1;
+    feedback.innerText = "Good";
+    spawnWave("lime");
+
   } else {
-    spawnWave("red"); // OFF BEAT
+    streak = 0;
+    feedback.innerText = "Miss";
+    spawnWave("red");
   }
-});
+
+  document.getElementById("score").innerText = "Score: " + score;
+  document.getElementById("streak").innerText = "Streak: " + streak;
+}
+
+// CLICK + TAP SUPPORT (without zoom garbage)
+document.addEventListener("click", handleInput);
+document.addEventListener("touchstart", handleInput);
 </script>
 
 </body>
