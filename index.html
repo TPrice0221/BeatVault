@@ -183,7 +183,6 @@ function startGame() {
 
 function stopGame() {
   gameStarted = false;
-
   clearTimeout(spawnTimeout);
 
   let audio = document.getElementById("beat");
@@ -202,17 +201,13 @@ function stopGame() {
 function restartGame() {
   score = 0;
   streak = 0;
-
   updateUI();
-
   document.getElementById("feedback").innerText = "";
-
   startGame();
 }
 
 function endGame() {
   gameStarted = false;
-
   clearTimeout(spawnTimeout);
 
   balls.forEach(b => b.el.remove());
@@ -227,7 +222,6 @@ function endGame() {
 
 function spawnLoop() {
   if (!gameStarted) return;
-
   spawnBall();
   spawnTimeout = setTimeout(spawnLoop, beatInterval);
 }
@@ -236,7 +230,6 @@ function spawnBall() {
   let ball = document.createElement("div");
   ball.classList.add("ball");
   ball.style.top = "-200px";
-
   document.body.appendChild(ball);
 
   let startTime = Date.now();
@@ -289,6 +282,8 @@ function handleInput() {
 
   if (best.hit) return;
 
+  target.classList.remove("hit", "miss");
+
   if (diff < 40) {
     score += 100;
     streak++;
@@ -297,12 +292,13 @@ function handleInput() {
     best.hit = true;
   } else {
     streak = 0;
-    feedback.innerText = "Miss 😭";
+    feedback.innerText = randomDiss();
     target.classList.add("miss");
     best.hit = true;
   }
 
-  setTimeout(() => target.classList.remove("hit","miss"), 100);
+  target.style.transform = "scale(1.1)";
+  setTimeout(() => target.style.transform = "scale(1)", 100);
 
   updateUI();
 }
@@ -310,6 +306,22 @@ function handleInput() {
 function updateUI() {
   document.getElementById("score").innerText = "Score: " + score;
   document.getElementById("streak").innerText = "Streak: " + streak;
+}
+
+function randomDiss() {
+  const lines = [
+    "Grandma got more rhythm 👵",
+    "For real? 😐",
+    "Do you even produce?",
+    "Off beat like crazy 😭",
+    "Bro... what was that?",
+    "That wasn't even close 💀",
+    "You hearing the same beat?",
+    "Try again champ 😅",
+    "Timing left the chat",
+    "You just guessing now?"
+  ];
+  return lines[Math.floor(Math.random() * lines.length)];
 }
 
 document.addEventListener("pointerdown", handleInput);
