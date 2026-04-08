@@ -31,73 +31,77 @@
 
   <audio id="beat" src="beat.mp3" loop></audio>
 
-  <script>
-    let score = 0;
-    let streak = 0;
-    let beat = false;
-    let started = false;
-    let won = false;
+<script>
+  let score = 0;
+  let streak = 0;
+  let beat = false;
+  let started = false;
+  let won = false;
+  let flashing = false;
 
-    const audio = document.getElementById("beat");
+  const audio = document.getElementById("beat");
 
-    let bpm = 167;
-    let interval = (60000 / bpm) * 2;
+  let bpm = 167;
+  let interval = (60000 / bpm) * 2;
 
-    function startGame() {
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
+  function startGame() {
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
 
-      setInterval(() => {
-        beat = true;
-
-        setTimeout(() => {
-          beat = false;
-        }, 160); // hit window
-
-      }, interval);
-    }
-
-    function tap() {
-
-      if (!started) {
-        started = true;
-        setTimeout(startGame, 80);
-      }
-
-      if (beat) {
-        score++;
-        streak++;
-
-        flash("#00ff88"); // success
-
-      } else {
-        score = Math.max(0, score - 1);
-        streak = 0;
-
-        flash("#ff4444"); // fail
-      }
-
-      document.getElementById("score").innerText = "Score: " + score;
-      document.getElementById("streak").innerText = "Streak: " + streak;
-
-      if (score >= 15 && !won) {
-        won = true;
-        document.getElementById("popup").style.display = "block";
-      }
-    }
-
-    function flash(color) {
-      document.body.style.background = color;
+    setInterval(() => {
+      beat = true;
 
       setTimeout(() => {
-        document.body.style.background = "#111";
-      }, 120);
+        beat = false;
+      }, 160);
+
+    }, interval);
+  }
+
+  function tap() {
+
+    if (!started) {
+      started = true;
+      setTimeout(startGame, 80);
     }
 
-    function closePopup() {
-      document.getElementById("popup").style.display = "none";
+    if (beat) {
+      score++;
+      streak++;
+      flash("#00ff88");
+    } else {
+      score = Math.max(0, score - 1);
+      streak = 0;
+      flash("#ff4444");
     }
-  </script>
+
+    document.getElementById("score").innerText = "Score: " + score;
+    document.getElementById("streak").innerText = "Streak: " + streak;
+
+    if (score >= 15 && !won) {
+      won = true;
+      document.getElementById("popup").style.display = "block";
+    }
+  }
+
+  function flash(color) {
+
+    // prevent overlapping flashes
+    if (flashing) return;
+
+    flashing = true;
+    document.body.style.background = color;
+
+    setTimeout(() => {
+      document.body.style.background = "#111";
+      flashing = false;
+    }, 120);
+  }
+
+  function closePopup() {
+    document.getElementById("popup").style.display = "none";
+  }
+</script>
 
 </body>
 </html>
