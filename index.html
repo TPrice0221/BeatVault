@@ -7,7 +7,7 @@
 <body style="text-align:center; font-family:sans-serif; background:#111; color:white; transition:0.1s;">
 
   <h1>Tap On Beat 🎧</h1>
-  <p>Build a streak by tapping in rhythm</p>
+  <p>Lock into the rhythm</p>
 
   <button onclick="tap()" style="font-size:24px; padding:20px;">TAP</button>
 
@@ -28,11 +28,11 @@
     box-shadow:0 0 20px rgba(0,0,0,0.8);
   ">
     <h2>🔥 You unlocked a sound pack!</h2>
-    <p>Nice timing… you might actually have rhythm.</p>
+    <p>You’re actually on beat… impressive.</p>
     <button onclick="closePopup()" style="padding:10px 20px; margin-top:10px;">Claim</button>
   </div>
 
-  <!-- YOUR BEAT FILE -->
+  <!-- Your Beat -->
   <audio id="beat" src="beat.mp3" loop></audio>
 
   <script>
@@ -44,46 +44,53 @@
 
     const audio = document.getElementById("beat");
 
+    // BPM SETTINGS
+    let bpm = 167;
+    let interval = (60000 / bpm) * 2; // half-time feel
+
     function startGame() {
+      audio.currentTime = 0;
       audio.play().catch(() => {});
 
       setInterval(() => {
         beat = true;
 
+        // visual cue (beat hit)
         document.body.style.background = "#1db954";
 
         setTimeout(() => {
           beat = false;
           document.body.style.background = "#111";
-        }, 300); // timing window
+        }, 160); // hit window (tight but playable)
 
-      }, 1000); // tempo (we can sync this later)
+      }, interval);
     }
 
     function tap() {
 
-      // First tap starts audio
+      // Start everything on first tap (mobile requirement)
       if (!started) {
         started = true;
-        startGame();
+
+        // slight delay to sync feel
+        setTimeout(() => {
+          startGame();
+        }, 80);
       }
 
       if (beat) {
         score++;
         streak++;
 
-        // Visual success feedback
-        document.body.style.background = "#00ff88";
+        document.body.style.background = "#00ff88"; // success
 
       } else {
         score = Math.max(0, score - 1);
         streak = 0;
 
-        // Visual fail feedback
-        document.body.style.background = "#ff4444";
+        document.body.style.background = "#ff4444"; // fail
       }
 
-      // Reset color quickly
       setTimeout(() => {
         document.body.style.background = "#111";
       }, 100);
