@@ -142,6 +142,51 @@ let balls = [];
 let targetCenter = 0;
 let spawnTimeout;
 
+let lastLine = "";
+
+function getRandomLine(list) {
+  let line;
+  do {
+    line = list[Math.floor(Math.random() * list.length)];
+  } while (line === lastLine);
+  lastLine = line;
+  return line;
+}
+
+function randomPerfect() {
+  return getRandomLine([
+    "PERFECT 🔥","NAILED IT 💎","LOCKED IN 🎯",
+    "RIGHT ON TIME ⏱️","CLEAN 🔥","IN THE POCKET 😮‍🔥",
+    "FLAWLESS 🧊","THAT'S MUSIC 😤","ZERO LATENCY 🧠",
+    "YOU BUILT DIFFERENT"
+  ]);
+}
+
+function randomGood() {
+  return getRandomLine([
+    "Nice 👍","Good timing 👌","You cooking 👨‍🍳",
+    "Keep it going 🔥","Almost perfect 👀",
+    "Solid hit 💪","You feeling it now",
+    "That was smooth","Okay okay 👀",
+    "We getting there 😏"
+  ]);
+}
+
+function randomDiss() {
+  return getRandomLine([
+    "Grandma got more rhythm 👵",
+    "For real? 😐",
+    "Do you even produce?",
+    "Off beat like crazy 😭",
+    "Bro... what was that?",
+    "You just guessing now?",
+    "Beat said left, you went right",
+    "Timing left the chat",
+    "That hurt to watch",
+    "You fighting the beat at this point"
+  ]);
+}
+
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
@@ -165,7 +210,6 @@ function startGame() {
 function stopGame() {
   gameStarted = false;
   clearTimeout(spawnTimeout);
-
   document.getElementById("beat").pause();
 
   balls.forEach(b => b.el.remove());
@@ -233,6 +277,7 @@ function spawnBall() {
       obj.hit = true;
       ball.classList.add("missed");
       streak = 0;
+      document.getElementById("feedback").innerText = randomDiss();
       updateUI();
     }
 
@@ -293,33 +338,6 @@ function handleInput() {
 function updateUI() {
   document.getElementById("score").innerText = "Score: " + score;
   document.getElementById("streak").innerText = "Streak: " + streak;
-}
-
-function randomPerfect() {
-  const lines = [
-    "PERFECT 🔥","NAILED IT 💎","LOCKED IN 🎯",
-    "THAT'S IT 😤","RIGHT ON TIME ⏱️","CLEAN 🔥"
-  ];
-  return lines[Math.floor(Math.random() * lines.length)];
-}
-
-function randomGood() {
-  const lines = [
-    "Nice 👍","Good timing 👌","You cooking 👨‍🍳",
-    "Keep it going 🔥","Almost perfect 👀"
-  ];
-  return lines[Math.floor(Math.random() * lines.length)];
-}
-
-function randomDiss() {
-  const lines = [
-    "Grandma got more rhythm 👵",
-    "For real? 😐",
-    "Do you even produce?",
-    "Off beat like crazy 😭",
-    "Bro... what was that?"
-  ];
-  return lines[Math.floor(Math.random() * lines.length)];
 }
 
 document.addEventListener("pointerdown", handleInput);
