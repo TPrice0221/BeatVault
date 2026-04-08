@@ -143,9 +143,8 @@ let targetCenter = 0;
 let spawnTimeout;
 
 let lastLine = "";
-let lastWasMiss = false;
 
-// ---------- RANDOM SYSTEM ----------
+// -------- RANDOM (NO REPEATS)
 function getRandomLine(list) {
   let line;
   do {
@@ -189,7 +188,7 @@ function randomDiss() {
   ]);
 }
 
-// ---------- GAME FLOW ----------
+// -------- GAME FLOW
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
@@ -247,7 +246,7 @@ function endGame() {
   document.getElementById("feedback").innerText = "Song Finished 🎵";
 }
 
-// ---------- SPAWN ----------
+// -------- SPAWN
 function spawnLoop() {
   if (!gameStarted) return;
   spawnBall();
@@ -277,17 +276,10 @@ function spawnBall() {
     let rect = ball.getBoundingClientRect();
     let center = rect.top + rect.height / 2;
 
-    // MISS LOGIC (NO SPAM)
     if (!obj.hit && center > targetCenter + 80) {
       obj.hit = true;
       ball.classList.add("missed");
       streak = 0;
-
-      if (!lastWasMiss) {
-        document.getElementById("feedback").innerText = randomDiss();
-        lastWasMiss = true;
-      }
-
       updateUI();
     }
 
@@ -303,11 +295,9 @@ function spawnBall() {
   animate();
 }
 
-// ---------- INPUT ----------
+// -------- INPUT (ONLY PLACE FEEDBACK HAPPENS)
 function handleInput() {
   if (!balls.length) return;
-
-  lastWasMiss = false;
 
   let target = document.getElementById("target");
   let feedback = document.getElementById("feedback");
@@ -338,7 +328,6 @@ function handleInput() {
     streak = 0;
     feedback.innerText = randomDiss();
     target.classList.add("miss");
-    lastWasMiss = true;
   }
 
   best.hit = true;
