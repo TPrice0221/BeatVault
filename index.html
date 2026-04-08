@@ -23,21 +23,27 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
       padding-top: 30px;
       position: relative;
     }
 
-    h1 {
-      margin-bottom: 10px;
-    }
+    h1 { margin-bottom: 10px; }
 
-    #score, #streak, #feedback {
+    #score, #streak {
       margin: 5px;
       font-size: 18px;
     }
 
-    /* BIG CENTER TARGET */
+    /* FEEDBACK TEXT */
+    #feedback {
+      position: absolute;
+      top: 140px;
+      font-size: 24px;
+      font-weight: bold;
+      text-shadow: 0 0 10px white;
+    }
+
+    /* BIG TARGET */
     #target {
       width: 180px;
       height: 180px;
@@ -46,27 +52,36 @@
       position: relative;
 
       border: 3px solid rgba(255,255,255,0.2);
-      box-shadow: 0 0 25px rgba(255,255,255,0.2),
-                  inset 0 0 20px rgba(255,255,255,0.1);
+      box-shadow:
+        0 0 25px rgba(255,255,255,0.2),
+        inset 0 0 20px rgba(255,255,255,0.1);
+
+      transition: all 0.15s ease;
     }
 
+    /* HIT / MISS GLOW */
     #target.hit {
-      box-shadow: 0 0 40px lime;
+      box-shadow:
+        0 0 50px lime,
+        inset 0 0 25px lime;
     }
 
     #target.miss {
-      box-shadow: 0 0 40px red;
+      box-shadow:
+        0 0 50px red,
+        inset 0 0 25px red;
     }
 
-    /* FALLING BALL */
+    /* SINGLE FALLING BALL */
     .ball {
-      width: 40px;
-      height: 40px;
-      background: white;
+      width: 180px;
+      height: 180px;
       border-radius: 50%;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
+      border: 2px solid rgba(255,255,255,0.15);
+      box-shadow: 0 0 15px rgba(255,255,255,0.2);
     }
 
     button {
@@ -86,7 +101,8 @@
 
   <div id="score">Score: 0</div>
   <div id="streak">Streak: 0</div>
-  <div id="feedback">...</div>
+
+  <div id="feedback"></div>
 
   <div id="target"></div>
 
@@ -105,17 +121,16 @@ let score = 0;
 let streak = 0;
 
 let currentBall = null;
-let target = null;
 let targetY = 0;
 
-let perfectWindow = 50;
-let goodWindow = 100;
+let perfectWindow = 40;
+let goodWindow = 80;
 
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
 
-  target = document.getElementById("target");
+  let target = document.getElementById("target");
   targetY = target.getBoundingClientRect().top;
 
   let audio = document.getElementById("beat");
@@ -131,9 +146,11 @@ function spawnLoop() {
 }
 
 function spawnBall() {
+  if (currentBall) return;
+
   let ball = document.createElement("div");
   ball.classList.add("ball");
-  ball.style.top = "-50px";
+  ball.style.top = "-200px";
 
   document.body.appendChild(ball);
   currentBall = ball;
@@ -166,24 +183,28 @@ function handleInput() {
   let diff = Math.abs(ballY - targetY);
 
   let feedback = document.getElementById("feedback");
+  let target = document.getElementById("target");
 
   target.classList.remove("hit", "miss");
 
   if (diff < perfectWindow) {
     score += 100;
     streak += 1;
-    feedback.innerText = "Perfect";
+    feedback.innerText = "PERFECT 🔥";
     target.classList.add("hit");
 
   } else if (diff < goodWindow) {
     score += 50;
     streak += 1;
-    feedback.innerText = "Good";
+    feedback.innerText = "Good 👍";
     target.classList.add("hit");
 
   } else {
     streak = 0;
-    feedback.innerText = "Miss";
+
+    let insults = ["ahh man", "oops", "do you even produce?"];
+    feedback.innerText = insults[Math.floor(Math.random() * insults.length)];
+
     target.classList.add("miss");
   }
 
