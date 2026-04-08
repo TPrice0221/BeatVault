@@ -99,6 +99,22 @@
       border-radius: 10px;
       border: none;
       z-index: 20;
+      #stopBtn, #restartBtn {
+  position: fixed;
+  bottom: 80px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: none;
+  z-index: 20;
+}
+
+#stopBtn {
+  left: 20%;
+}
+
+#restartBtn {
+  right: 20%;
+}
     }
 
     /* FLASH */
@@ -145,7 +161,8 @@
 </div>
 
 <button id="startBtn" onclick="startGame()">Start</button>
-
+<button id="stopBtn" onclick="stopGame()" style="display:none;">Stop</button>
+<button id="restartBtn" onclick="restartGame()" style="display:none;">Restart</button>
 <div id="flash"></div>
 
 <div id="beatInfo">
@@ -265,6 +282,35 @@ function handleInput() {
       smallestDiff = diff;
       best = b;
     }
+    function stopGame() {
+  gameStarted = false;
+
+  clearTimeout(spawnTimeout);
+
+  let audio = document.getElementById("beat");
+  audio.pause();
+
+  balls.forEach(b => b.el.remove());
+  balls = [];
+
+  document.getElementById("startBtn").style.display = "block";
+  document.getElementById("stopBtn").style.display = "none";
+  document.getElementById("restartBtn").style.display = "block";
+
+  document.getElementById("feedback").innerText = "Stopped ⏹";
+    }
+    function restartGame() {
+  score = 0;
+  streak = 0;
+
+  updateUI();
+
+  document.getElementById("feedback").innerText = "";
+
+  document.getElementById("restartBtn").style.display = "none";
+
+  startGame();
+    }
   });
 
   if (!best || best.hit) return;
@@ -342,6 +388,8 @@ function endGame() {
 
   document.getElementById("startBtn").style.display = "block";
   document.getElementById("feedback").innerText = "Song Finished 🎵";
+  document.getElementById("restartBtn").style.display = "block";
+document.getElementById("stopBtn").style.display = "none";
 }
 </script>
 
