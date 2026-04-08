@@ -7,33 +7,55 @@
 
   <style>
     body {
+      margin: 0;
       background: url('background.jpg') no-repeat center center fixed;
       background-size: cover;
       color: white;
-      text-align: center;
       font-family: Arial;
-      touch-action: manipulation;
+      text-align: center;
       overflow: hidden;
+      touch-action: manipulation;
     }
 
     #overlay {
       background: rgba(0,0,0,0.6);
-      min-height: 100vh;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 30px;
       position: relative;
     }
 
-    /* TARGET ZONE */
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    #score, #streak, #feedback {
+      margin: 5px;
+      font-size: 18px;
+    }
+
+    /* BIG CENTER TARGET */
     #target {
-      width: 160px;
-      height: 160px;
+      width: 180px;
+      height: 180px;
       border-radius: 50%;
-      position: absolute;
-      bottom: 120px;
-      left: 50%;
-      transform: translateX(-50%);
+      margin-top: 40px;
+      position: relative;
 
       border: 3px solid rgba(255,255,255,0.2);
-      box-shadow: 0 0 25px rgba(255,255,255,0.2);
+      box-shadow: 0 0 25px rgba(255,255,255,0.2),
+                  inset 0 0 20px rgba(255,255,255,0.1);
+    }
+
+    #target.hit {
+      box-shadow: 0 0 40px lime;
+    }
+
+    #target.miss {
+      box-shadow: 0 0 40px red;
     }
 
     /* FALLING BALL */
@@ -47,15 +69,8 @@
       transform: translateX(-50%);
     }
 
-    #score, #streak, #feedback {
-      position: relative;
-      z-index: 10;
-      font-size: 20px;
-      margin-top: 10px;
-    }
-
     button {
-      margin-top: 20px;
+      margin-top: 30px;
       padding: 12px 20px;
       border-radius: 8px;
       border: none;
@@ -69,11 +84,11 @@
 
   <h1>Stay On Beat</h1>
 
-  <div id="target"></div>
-
   <div id="score">Score: 0</div>
   <div id="streak">Streak: 0</div>
   <div id="feedback">...</div>
+
+  <div id="target"></div>
 
   <button onclick="startGame()">Start</button>
 
@@ -90,14 +105,18 @@ let score = 0;
 let streak = 0;
 
 let currentBall = null;
-let targetY = window.innerHeight - 200;
+let target = null;
+let targetY = 0;
 
-let perfectWindow = 80;
-let goodWindow = 150;
+let perfectWindow = 50;
+let goodWindow = 100;
 
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
+
+  target = document.getElementById("target");
+  targetY = target.getBoundingClientRect().top;
 
   let audio = document.getElementById("beat");
   audio.currentTime = 0;
@@ -148,31 +167,34 @@ function handleInput() {
 
   let feedback = document.getElementById("feedback");
 
+  target.classList.remove("hit", "miss");
+
   if (diff < perfectWindow) {
     score += 100;
     streak += 1;
     feedback.innerText = "Perfect";
-    currentBall.style.background = "lime";
+    target.classList.add("hit");
 
   } else if (diff < goodWindow) {
     score += 50;
     streak += 1;
     feedback.innerText = "Good";
-    currentBall.style.background = "yellow";
+    target.classList.add("hit");
 
   } else {
     streak = 0;
     feedback.innerText = "Miss";
-    currentBall.style.background = "red";
+    target.classList.add("miss");
   }
 
   document.getElementById("score").innerText = "Score: " + score;
   document.getElementById("streak").innerText = "Streak: " + streak;
 
   setTimeout(() => {
+    target.classList.remove("hit", "miss");
     currentBall?.remove();
     currentBall = null;
-  }, 100);
+  }, 150);
 }
 
 document.addEventListener("click", handleInput);
