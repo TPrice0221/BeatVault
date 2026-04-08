@@ -1,120 +1,106 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Beat Tap Game</title>
+  <title>On Beat Game</title>
+  <style>
+    body {
+      background: black;
+      color: white;
+      text-align: center;
+      font-family: Arial;
+    }
+
+    #circle {
+      width: 150px;
+      height: 150px;
+      background: red;
+      border-radius: 50%;
+      margin: 100px auto;
+      transition: transform 0.1s, background 0.1s;
+    }
+
+    #circle.pulse {
+      transform: scale(1.3);
+      background: yellow;
+    }
+
+    #circle.hit {
+      background: lime;
+      transform: scale(1.5);
+    }
+
+    #circle.miss {
+      background: red;
+      transform: scale(0.8);
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 
-<body style="text-align:center; font-family:sans-serif; background:#111; color:white; transition:0.15s;">
+<body>
 
-  <h1>Tap On Beat 🎧</h1>
-  <p>Stay locked in</p>
+<h1>Stay On Beat</h1>
 
-  <button onclick="tap()" style="font-size:24px; padding:20px;">TAP</button>
-<div id="indicator" style="
-  width:60px;
-  height:60px;
-  margin:20px auto;
-  border-radius:50%;
-  background:#444;
-  transition:0.1s;
-"></div>
-  <h2 id="score">Score: 0</h2>
-  <h3 id="streak">Streak: 0</h3>
+<div id="circle"></div>
 
-  <!-- Popup -->
-  <div id="popup" style="
-    display:none;
-    position:fixed;
-    top:50%;
-    left:50%;
-    transform:translate(-50%, -50%);
-    background:#222;
-    padding:30px;
-    border-radius:10px;
-  ">
-    <h2>🔥 You unlocked a sound pack!</h2>
-    <button onclick="closePopup()">Claim</button>
-  </div>
+<button onclick="startGame()">Start</button>
 
-  <audio id="beat" src="beat.mp3" loop></audio>
+<audio id="beat" src="beat.mp3"></audio>
 
 <script>
-  let score = 0;
-  let streak = 0;
-  let beat = false;
-  let started = false;
-  let won = false;
-  let flashing = false;
+let bpm = 167;
+let beatInterval = 60000 / bpm;
+let lastBeatTime = 0;
 
-  const audio = document.getElementById("beat");
+let tolerance = 120; // ms window (adjust feel here)
 
-  let bpm = 167;
-  let interval = (60000 / bpm) * 2;
-
-  function startGame() {
-    audio.currentTime = 0;
-    audio.play().catch(() => {});
+function startGame() {
+  let audio = document.getElementById("beat");
+  audio.currentTime = 0;
+  audio.play();
 
   setInterval(() => {
-  beat = true;
+    let circle = document.getElementById("circle");
 
-  let indicator = document.getElementById("indicator");
-
-  // pulse effect
-  indicator.style.background = "#1db954";
-  indicator.style.transform = "scale(1.3)";
-
-  setTimeout(() => {
-    beat = false;
-    indicator.style.background = "#444";
-    indicator.style.transform = "scale(1)";
-  }, 160);
-
-}, interval);
-
-  function tap() {
-
-    if (!started) {
-      started = true;
-      setTimeout(startGame, 80);
-    }
-
-    if (beat) {
-      score++;
-      streak++;
-      flash("#00ff88");
-    } else {
-      score = Math.max(0, score - 1);
-      streak = 0;
-      flash("#ff4444");
-    }
-
-    document.getElementById("score").innerText = "Score: " + score;
-    document.getElementById("streak").innerText = "Streak: " + streak;
-
-    if (score >= 15 && !won) {
-      won = true;
-      document.getElementById("popup").style.display = "block";
-    }
-  }
-
-  function flash(color) {
-
-    // prevent overlapping flashes
-    if (flashing) return;
-
-    flashing = true;
-    document.body.style.background = color;
+    // Pulse BEFORE beat (anticipation cue)
+    circle.classList.add("pulse");
 
     setTimeout(() => {
-      document.body.style.background = "#111";
-      flashing = false;
-    }, 120);
-  }
+      circle.classList.remove("pulse");
+    }, 100);
 
-  function closePopup() {
-    document.getElementById("popup").style.display = "none";
+    lastBeatTime = Date.now();
+  }, beatInterval);
+}
+
+document.addEventListener("click", () => {
+  let now = Date.now();
+  let diff = Math.abs(now - lastBeatTime);
+
+  let circle = document.getElementById("circle");
+
+  if (diff < tolerance) {
+    circle.classList.remove("miss");
+    circle.classList.add("hit");
+
+    setTimeout(() => {
+      circle.classList.remove("hit");
+    }, 150);
+
+  } else {
+    circle.classList.remove("hit");
+    circle.classList.add("miss");
+
+    setTimeout(() => {
+      circle.classList.remove("miss");
+    }, 150);
   }
+});
 </script>
 
 </body>
