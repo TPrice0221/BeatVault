@@ -21,6 +21,9 @@
       padding-top: 30px;
     }
 
+    h1 { margin-bottom: 10px; }
+
+    /* TOP FEEDBACK */
     #feedback {
       position: absolute;
       top: 80px;
@@ -28,6 +31,7 @@
       font-size: 28px;
       font-weight: bold;
       text-shadow: 0 0 20px white;
+      pointer-events: none;
     }
 
     /* TARGET */
@@ -51,7 +55,7 @@
       box-shadow: 0 0 70px red, inset 0 0 30px red;
     }
 
-    /* BALL (SAME SIZE NOW) */
+    /* BALL (SAME SIZE) */
     .ball {
       width: 180px;
       height: 180px;
@@ -69,12 +73,28 @@
       box-shadow: 0 0 40px red;
     }
 
+    /* BOTTOM UI */
     #bottomUI {
       position: fixed;
       bottom: 20px;
       width: 100%;
+      font-size: 18px;
     }
 
+    /* START BUTTON */
+    #startBtn {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 14px 28px;
+      font-size: 18px;
+      border-radius: 10px;
+      border: none;
+      z-index: 20;
+    }
+
+    /* FLASH */
     #flash {
       position: fixed;
       width: 100%;
@@ -104,6 +124,8 @@
   <div id="streak">Streak: 0</div>
 </div>
 
+<button id="startBtn" onclick="startGame()">Start</button>
+
 <div id="flash"></div>
 
 <audio id="beat" src="beat.mp3"></audio>
@@ -127,6 +149,8 @@ let lastTap = 0;
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
+
+  document.getElementById("startBtn").style.display = "none";
 
   let target = document.getElementById("target");
   let rect = target.getBoundingClientRect();
@@ -161,19 +185,19 @@ function spawnBall() {
     let now = Date.now();
     let progress = (now - startTime) / duration;
 
-    let endY = targetCenter - 90; // center align
+    let endY = targetCenter - 90;
     let y = progress * (endY + 200);
     ball.style.top = y + "px";
 
-    /* IF PASSED TARGET = MISSED */
     let rect = ball.getBoundingClientRect();
     let center = rect.top + rect.height / 2;
 
+    // LATE MISS (passes target)
     if (!obj.hit && center > targetCenter + goodWindow) {
       obj.hit = true;
       ball.classList.add("missed");
-      punish();
       streak = 0;
+      punish();
       updateUI();
     }
 
