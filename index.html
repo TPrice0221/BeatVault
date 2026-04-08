@@ -13,33 +13,40 @@
 
   <h2 id="score">Score: 0</h2>
 
-  <!-- Sound -->
   <audio id="beat" src="https://www.soundjay.com/button/beep-07.wav"></audio>
 
   <script>
     let score = 0;
     let beat = false;
     let won = false;
+    let started = false;
 
     const audio = document.getElementById("beat");
 
-    // Beat loop
-    setInterval(() => {
-      beat = true;
+    function startBeat() {
+      setInterval(() => {
+        beat = true;
 
-      audio.currentTime = 0;
-      audio.play();
+        audio.currentTime = 0;
+        audio.play();
 
-      document.body.style.background = "#1db954";
+        document.body.style.background = "#1db954";
 
-      setTimeout(() => {
-        beat = false;
-        document.body.style.background = "#111";
-      }, 300);
+        setTimeout(() => {
+          beat = false;
+          document.body.style.background = "#111";
+        }, 300);
 
-    }, 1000);
+      }, 1000);
+    }
 
     function tap() {
+      // Start audio loop on first tap
+      if (!started) {
+        started = true;
+        startBeat();
+      }
+
       if (beat) {
         score++;
       } else {
@@ -48,7 +55,6 @@
 
       document.getElementById("score").innerText = "Score: " + score;
 
-      // Win condition
       if (score >= 10 && !won) {
         won = true;
         setTimeout(() => {
