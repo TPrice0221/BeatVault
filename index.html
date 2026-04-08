@@ -4,10 +4,10 @@
   <title>Beat Tap Game</title>
 </head>
 
-<body style="text-align:center; font-family:sans-serif; background:#111; color:white; transition:0.1s;">
+<body style="text-align:center; font-family:sans-serif; background:#111; color:white; transition:0.15s;">
 
   <h1>Tap On Beat 🎧</h1>
-  <p>Lock into the rhythm</p>
+  <p>Stay locked in</p>
 
   <button onclick="tap()" style="font-size:24px; padding:20px;">TAP</button>
 
@@ -24,15 +24,11 @@
     background:#222;
     padding:30px;
     border-radius:10px;
-    text-align:center;
-    box-shadow:0 0 20px rgba(0,0,0,0.8);
   ">
     <h2>🔥 You unlocked a sound pack!</h2>
-    <p>You’re actually on beat… impressive.</p>
-    <button onclick="closePopup()" style="padding:10px 20px; margin-top:10px;">Claim</button>
+    <button onclick="closePopup()">Claim</button>
   </div>
 
-  <!-- Your Beat -->
   <audio id="beat" src="beat.mp3" loop></audio>
 
   <script>
@@ -44,9 +40,8 @@
 
     const audio = document.getElementById("beat");
 
-    // BPM SETTINGS
     let bpm = 167;
-    let interval = (60000 / bpm) * 2; // half-time feel
+    let interval = (60000 / bpm) * 2;
 
     function startGame() {
       audio.currentTime = 0;
@@ -55,54 +50,48 @@
       setInterval(() => {
         beat = true;
 
-        // visual cue (beat hit)
-        document.body.style.background = "#1db954";
-
         setTimeout(() => {
           beat = false;
-          document.body.style.background = "#111";
-        }, 160); // hit window (tight but playable)
+        }, 160); // hit window
 
       }, interval);
     }
 
     function tap() {
 
-      // Start everything on first tap (mobile requirement)
       if (!started) {
         started = true;
-
-        // slight delay to sync feel
-        setTimeout(() => {
-          startGame();
-        }, 80);
+        setTimeout(startGame, 80);
       }
 
       if (beat) {
         score++;
         streak++;
 
-        document.body.style.background = "#00ff88"; // success
+        flash("#00ff88"); // success
 
       } else {
         score = Math.max(0, score - 1);
         streak = 0;
 
-        document.body.style.background = "#ff4444"; // fail
+        flash("#ff4444"); // fail
       }
-
-      setTimeout(() => {
-        document.body.style.background = "#111";
-      }, 100);
 
       document.getElementById("score").innerText = "Score: " + score;
       document.getElementById("streak").innerText = "Streak: " + streak;
 
-      // Win condition
       if (score >= 15 && !won) {
         won = true;
         document.getElementById("popup").style.display = "block";
       }
+    }
+
+    function flash(color) {
+      document.body.style.background = color;
+
+      setTimeout(() => {
+        document.body.style.background = "#111";
+      }, 120);
     }
 
     function closePopup() {
