@@ -13,45 +13,38 @@
     #circle {
       width: 150px;
       height: 150px;
-      background: red;
+      background: #111;
       border-radius: 50%;
-      margin: 60px auto;
-      transition: transform 0.1s, background 0.1s;
+      margin: 120px auto;
+      position: relative;
     }
 
-    #circle.pulse {
-      transform: scale(1.3);
-      background: yellow;
+    /* Expanding glow */
+    .wave {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0.5);
+      opacity: 0.8;
+      pointer-events: none;
     }
 
-    #circle.hit {
-      background: lime;
-      transform: scale(1.5);
+    .wave.animate {
+      animation: expand 0.36s linear;
     }
 
-    #circle.miss {
-      background: red;
-      transform: scale(0.8);
-    }
-
-    #barContainer {
-      width: 80%;
-      height: 10px;
-      background: #222;
-      margin: 20px auto;
-      border-radius: 5px;
-      overflow: hidden;
-    }
-
-    #bar {
-      width: 0%;
-      height: 100%;
-      background: cyan;
-    }
-
-    #score, #streak, #feedback {
-      font-size: 20px;
-      margin-top: 10px;
+    @keyframes expand {
+      0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 0.8;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(2.5);
+        opacity: 0;
+      }
     }
 
     button {
@@ -68,14 +61,6 @@
 
 <div id="circle"></div>
 
-<div id="barContainer">
-  <div id="bar"></div>
-</div>
-
-<div id="score">Score: 0</div>
-<div id="streak">Streak: 0</div>
-<div id="feedback">...</div>
-
 <button onclick="startGame()">Start</button>
 
 <audio id="beat" src="beat.mp3"></audio>
@@ -85,70 +70,55 @@ let bpm = 167;
 let beatInterval = 60000 / bpm;
 
 let lastBeatTime = 0;
-let score = 0;
-let streak = 0;
+let gameStarted = false;
 
-let perfectWindow = 60;
-let goodWindow = 130;
+let perfectWindow = 80;
 
 function startGame() {
+  if (gameStarted) return; // STOP MULTIPLE STARTS
+  gameStarted = true;
+
   let audio = document.getElementById("beat");
   audio.currentTime = 0;
   audio.play();
 
-  setInterval(() => {
-    let circle = document.getElementById("circle");
+  runBeatLoop();
+}
 
-    circle.classList.add("pulse");
+function runBeatLoop() {
+  let now = Date.now();
+  lastBeatTime = now;
 
-    setTimeout(() => {
-      circle.classList.remove("pulse");
-    }, 100);
+  spawnWave("white"); // neutral beat pulse
 
-    lastBeatTime = Date.now();
-  }, beatInterval);
+  setTimeout(runBeatLoop, beatInterval);
+}
 
-  // Progress bar animation
-  setInterval(() => {
-    let now = Date.now();
-    let progress = (now - lastBeatTime) / beatInterval;
-    document.getElementById("bar").style.width = (progress * 100) + "%";
-  }, 16);
+function spawnWave(color) {
+  let circle = document.getElementById("circle");
+
+  let wave = document.createElement("div");
+  wave.classList.add("wave", "animate");
+  wave.style.border = "3px solid " + color;
+
+  circle.appendChild(wave);
+
+  setTimeout(() => {
+    wave.remove();
+  }, 400);
 }
 
 document.addEventListener("click", () => {
+  if (!gameStarted) return;
+
   let now = Date.now();
   let diff = Math.abs(now - lastBeatTime);
 
-  let circle = document.getElementById("circle");
-  let feedback = document.getElementById("feedback");
-
   if (diff < perfectWindow) {
-    score += 100;
-    streak += 1;
-    feedback.innerText = "Perfect";
-
-    circle.classList.add("hit");
-    setTimeout(() => circle.classList.remove("hit"), 150);
-
-  } else if (diff < goodWindow) {
-    score += 50;
-    streak += 1;
-    feedback.innerText = "Good";
-
-    circle.classList.add("hit");
-    setTimeout(() => circle.classList.remove("hit"), 150);
-
+    spawnWave("lime"); // ON BEAT
   } else {
-    streak = 0;
-    feedback.innerText = "Miss";
-
-    circle.classList.add("miss");
-    setTimeout(() => circle.classList.remove("miss"), 150);
+    spawnWave("red"); // OFF BEAT
   }
-
-  document.getElementById("score").innerText = "Score: " + score;
-  document.getElementById("streak").innerText = "Streak: " + streak;
 });
 </script>
 
