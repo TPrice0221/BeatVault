@@ -21,11 +21,9 @@
       padding-top: 30px;
     }
 
-    h1 { margin-bottom: 10px; }
-
     #feedback {
       position: absolute;
-      top: 120px;
+      top: 140px;
       width: 100%;
       font-size: 28px;
       font-weight: bold;
@@ -94,20 +92,6 @@
     #stopBtn { left: 20%; display:none; }
     #restartBtn { right: 20%; display:none; }
 
-    #flash {
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      background: rgba(255,0,0,0.2);
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    #flash.active {
-      opacity: 1;
-      transition: opacity 0.1s;
-    }
-
     #beatInfo {
       position: fixed;
       bottom: 10px;
@@ -139,8 +123,6 @@
 <button id="stopBtn" onclick="stopGame()">Stop</button>
 <button id="restartBtn" onclick="restartGame()">Restart</button>
 
-<div id="flash"></div>
-
 <div id="beatInfo">
   Beat: "XoXo"<br>
   Producer: CannaprizeBEATS
@@ -158,7 +140,6 @@ let streak = 0;
 
 let balls = [];
 let targetCenter = 0;
-
 let spawnTimeout;
 
 function startGame() {
@@ -185,8 +166,7 @@ function stopGame() {
   gameStarted = false;
   clearTimeout(spawnTimeout);
 
-  let audio = document.getElementById("beat");
-  audio.pause();
+  document.getElementById("beat").pause();
 
   balls.forEach(b => b.el.remove());
   balls = [];
@@ -261,31 +241,6 @@ function spawnBall() {
       balls = balls.filter(b => b !== obj);
       return;
     }
-    function randomPerfect() {
-  const lines = [
-    "PERFECT 🔥",
-    "NAILED IT 💎",
-    "LOCKED IN 🎯",
-    "THAT'S IT 😤",
-    "RIGHT ON TIME ⏱️",
-    "CLEAN 🔥",
-    "YOU IN THE POCKET 😮‍🔥"
-  ];
-  return lines[Math.floor(Math.random() * lines.length)];
-}
-
-function randomGood() {
-  const lines = [
-    "Nice 👍",
-    "Good timing 👌",
-    "You cooking 👨‍🍳",
-    "Keep it going 🔥",
-    "Almost perfect 👀",
-    "That’s clean",
-    "We getting there 😏"
-  ];
-  return lines[Math.floor(Math.random() * lines.length)];
-}
 
     requestAnimationFrame(animate);
   }
@@ -309,42 +264,25 @@ function handleInput() {
 
   target.classList.remove("hit", "miss");
 
-   if (diff < 40) {
-  score += 100;
-  streak++;
+  if (diff < 30) {
+    score += 100;
+    streak++;
+    feedback.innerText = randomPerfect();
+    target.classList.add("hit");
 
-  feedback.innerText = randomPerfect();
-  target.classList.add("hit");
-  best.hit = true;
-     if (diff < 30) {
-  score += 100;
-  streak++;
+  } else if (diff < 70) {
+    score += 50;
+    streak++;
+    feedback.innerText = randomGood();
+    target.classList.add("hit");
 
-  feedback.innerText = randomPerfect();
-  target.classList.add("hit");
-  best.hit = true;
-
-} else if (diff < 70) {
-  score += 50;
-  streak++;
-
-  feedback.innerText = randomGood();
-  target.classList.add("hit");
-  best.hit = true;
-
-} else {
-  streak = 0;
-  feedback.innerText = randomDiss();
-  target.classList.add("miss");
-  best.hit = true;
-     }
-   }
   } else {
     streak = 0;
     feedback.innerText = randomDiss();
     target.classList.add("miss");
-    best.hit = true;
   }
+
+  best.hit = true;
 
   target.style.transform = "scale(1.1)";
   setTimeout(() => target.style.transform = "scale(1)", 100);
@@ -357,18 +295,29 @@ function updateUI() {
   document.getElementById("streak").innerText = "Streak: " + streak;
 }
 
+function randomPerfect() {
+  const lines = [
+    "PERFECT 🔥","NAILED IT 💎","LOCKED IN 🎯",
+    "THAT'S IT 😤","RIGHT ON TIME ⏱️","CLEAN 🔥"
+  ];
+  return lines[Math.floor(Math.random() * lines.length)];
+}
+
+function randomGood() {
+  const lines = [
+    "Nice 👍","Good timing 👌","You cooking 👨‍🍳",
+    "Keep it going 🔥","Almost perfect 👀"
+  ];
+  return lines[Math.floor(Math.random() * lines.length)];
+}
+
 function randomDiss() {
   const lines = [
     "Grandma got more rhythm 👵",
     "For real? 😐",
     "Do you even produce?",
     "Off beat like crazy 😭",
-    "Bro... what was that?",
-    "That wasn't even close 💀",
-    "You hearing the same beat?",
-    "Try again champ 😅",
-    "Timing left the chat",
-    "You just guessing now?"
+    "Bro... what was that?"
   ];
   return lines[Math.floor(Math.random() * lines.length)];
 }
