@@ -21,14 +21,12 @@
       padding-top: 30px;
     }
 
-    h1 {
-      margin-bottom: 10px;
-    }
+    h1 { margin-bottom: 10px; }
 
-    /* FEEDBACK TEXT (MOVED DOWN) */
+    /* FEEDBACK */
     #feedback {
       position: absolute;
-      top: 120px; /* was 80px */
+      top: 120px;
       width: 100%;
       font-size: 28px;
       font-weight: bold;
@@ -36,23 +34,24 @@
       pointer-events: none;
     }
 
-    /* CENTERED TARGET */
-    #target {
-      width: 180px;
-      height: 180px;
-      border-radius: 50%;
-
+    /* CENTER HOLDER */
+    #targetWrapper {
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
+    }
 
+    /* TARGET */
+    #target {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
       border: 3px solid rgba(255,255,255,0.2);
       box-shadow:
         0 0 25px rgba(255,255,255,0.2),
         inset 0 0 20px rgba(255,255,255,0.1);
-
-      transition: all 0.1s ease;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
     }
 
     #target.hit {
@@ -117,7 +116,7 @@
       transition: opacity 0.1s;
     }
 
-    /* BEAT INFO (BOTTOM CORNER) */
+    /* BEAT INFO */
     #beatInfo {
       position: fixed;
       bottom: 10px;
@@ -136,7 +135,9 @@
   <div id="feedback"></div>
 </div>
 
-<div id="target"></div>
+<div id="targetWrapper">
+  <div id="target"></div>
+</div>
 
 <div id="bottomUI">
   <div id="score">Score: 0</div>
@@ -195,9 +196,7 @@ function spawnLoop() {
 
   spawnBall();
 
-  spawnTimeout = setTimeout(() => {
-    spawnLoop();
-  }, beatInterval);
+  spawnTimeout = setTimeout(spawnLoop, beatInterval);
 }
 
 function spawnBall() {
@@ -294,6 +293,7 @@ function handleInput() {
     punish();
   }
 
+  /* SAFE SCALE (no movement) */
   target.style.transform = "scale(1.1)";
   setTimeout(() => target.style.transform = "scale(1)", 100);
 
@@ -316,7 +316,16 @@ function randomInsult() {
     "ahh man",
     "too late bro",
     "do you even produce?",
-    "off beat 😭"
+    "off beat 😭",
+    "Imagine...",
+    "Grandma got more rhythm",
+    "ummmm....",
+    "Like fr though?",
+    "I don't think you're cut out for this",
+    "Just stop 🛑",
+    "Again?",
+    "Sure just hit it whenever...",
+    "Im glad this isn't live"
   ];
   return lines[Math.floor(Math.random() * lines.length)];
 }
