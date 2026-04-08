@@ -3,7 +3,7 @@
 <head>
   <title>Stay On Beat</title>
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body {
@@ -13,16 +13,12 @@
       color: white;
       font-family: Arial;
       text-align: center;
-      overflow: hidden;
-      touch-action: manipulation;
+      /* REMOVED touch-action + overflow lock */
     }
 
     #overlay {
       background: rgba(0,0,0,0.6);
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      min-height: 100vh;
       padding-top: 30px;
       position: relative;
     }
@@ -34,22 +30,21 @@
       font-size: 18px;
     }
 
-    /* FEEDBACK TEXT */
     #feedback {
       position: absolute;
       top: 90px;
+      width: 100%;
       font-size: 26px;
       font-weight: bold;
       text-shadow: 0 0 15px white;
+      pointer-events: none;
     }
 
-    /* TARGET */
     #target {
       width: 180px;
       height: 180px;
       border-radius: 50%;
-      margin-top: 40px;
-      position: relative;
+      margin: 40px auto;
 
       border: 3px solid rgba(255,255,255,0.2);
       box-shadow:
@@ -67,7 +62,6 @@
       box-shadow: 0 0 60px red, inset 0 0 25px red;
     }
 
-    /* BALL */
     .ball {
       width: 80px;
       height: 80px;
@@ -78,6 +72,7 @@
       background: rgba(255,255,255,0.2);
       border: 2px solid rgba(255,255,255,0.4);
       box-shadow: 0 0 20px rgba(255,255,255,0.5);
+      pointer-events: none;
     }
 
     .ball.missed {
@@ -85,18 +80,19 @@
       box-shadow: 0 0 25px red;
     }
 
-    /* START BUTTON */
     button {
-      position: absolute;
+      position: fixed;
       bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
       padding: 12px 20px;
       border-radius: 8px;
       border: none;
+      z-index: 20;
     }
 
-    /* PUNISHMENT FLASH */
     #flash {
-      position: absolute;
+      position: fixed;
       width: 100%;
       height: 100%;
       background: rgba(255,0,0,0.2);
@@ -124,11 +120,11 @@
 
   <div id="target"></div>
 
-  <button onclick="startGame()">Start</button>
-
-  <div id="flash"></div>
-
 </div>
+
+<button onclick="startGame()">Start</button>
+
+<div id="flash"></div>
 
 <audio id="beat" src="beat.mp3"></audio>
 
@@ -149,6 +145,8 @@ let goodWindow = 70;
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
+
+  document.querySelector("button").style.display = "none";
 
   let target = document.getElementById("target");
   targetY = target.getBoundingClientRect().top;
@@ -182,9 +180,10 @@ function spawnBall() {
     let now = Date.now();
     let progress = (now - startTime) / duration;
 
-    if (progress >= 1) {
-      ball.style.top = targetY + "px";
+    let y = progress * targetY;
+    ball.style.top = y + "px";
 
+    if (progress >= 1) {
       if (!obj.hit) {
         ball.classList.add("missed");
         punish();
@@ -197,9 +196,6 @@ function spawnBall() {
 
       return;
     }
-
-    let y = progress * targetY;
-    ball.style.top = y + "px";
 
     requestAnimationFrame(animate);
   }
@@ -251,7 +247,6 @@ function handleInput() {
     punish();
   }
 
-  // impact scale
   target.style.transform = "scale(1.1)";
   setTimeout(() => target.style.transform = "scale(1)", 100);
 
@@ -273,8 +268,7 @@ function randomInsult() {
     "ahh man",
     "oops",
     "do you even produce?",
-    "off beat bro 😭",
-    "come on now..."
+    "off beat bro 😭"
   ];
   return lines[Math.floor(Math.random() * lines.length)];
 }
