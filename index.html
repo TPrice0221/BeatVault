@@ -356,6 +356,11 @@ function handleInput() {
 }
 
 document.addEventListener("pointerdown", handleInput);
+document.getElementById("beat").onended = () => {
+  stopGame();
+    document.getElementById("feedback").innerText = "Beat Finished, You rock! 🎵";
+};
+};
 </script>
 
 </body>
