@@ -285,13 +285,24 @@ function spawnBall() {
     let endY = targetCenter - 90;
     ball.style.top = (progress * (endY + 200)) + "px";
 
-    if (progress > 1.3) {
-      ball.remove();
-      balls = balls.filter(b => b !== obj);
-      return;
-    }
-    requestAnimationFrame(animate);
+if (progress > 1.3) {
+
+  if (!obj.hit) {
+    streak = 0;
+    document.getElementById("feedback").innerText = randomDiss();
+
+    let target = document.getElementById("target");
+    target.classList.add("miss");
+
+    setTimeout(() => {
+      target.classList.remove("miss");
+    }, 200);
   }
+
+  ball.remove();
+  balls = balls.filter(b => b !== obj);
+  return;
+}
   animate();
 }
 
