@@ -7,11 +7,17 @@
   <style>
     body {
       margin: 0;
-      background: url('background.jpg') no-repeat center center fixed;
+      background: url('background.jpg') repeat-y center top;
       background-size: cover;
       color: white;
       font-family: Arial;
       text-align: center;
+      animation: bgMove 25s linear infinite;
+    }
+
+    @keyframes bgMove {
+      0% { background-position: center 0px; }
+      100% { background-position: center 300px; }
     }
 
     #overlay {
@@ -54,11 +60,11 @@
     }
 
     #target.hit {
-      box-shadow: 0 0 80px lime, inset 0 0 40px lime;
+      box-shadow: 0 0 70px lime, inset 0 0 30px lime;
     }
 
     #target.miss {
-      box-shadow: 0 0 80px red, inset 0 0 40px red;
+      box-shadow: 0 0 70px red, inset 0 0 30px red;
     }
 
     .ball {
@@ -150,7 +156,7 @@ let pulseInterval;
 
 let lastLine = "";
 
-// ---------- RANDOM (NO REPEATS)
+// RANDOM (no repeats)
 function getRandomLine(list) {
   let line;
   do {
@@ -188,7 +194,7 @@ function randomDiss() {
   ]);
 }
 
-// ---------- GAME FLOW
+// GAME FLOW
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
@@ -239,7 +245,7 @@ function endGame() {
   document.getElementById("feedback").innerText = "Song Finished 🎵";
 }
 
-// ---------- BEAT PULSE
+// BEAT PULSE
 function startPulse() {
   let target = document.getElementById("target");
 
@@ -249,7 +255,7 @@ function startPulse() {
   }, beatInterval);
 }
 
-// ---------- SPAWN
+// SPAWN
 function spawnLoop() {
   if (!gameStarted) return;
   spawnBall();
@@ -288,7 +294,7 @@ function spawnBall() {
   animate();
 }
 
-// ---------- INPUT (FIXED LOGIC)
+// INPUT (closest ball fix)
 function handleInput() {
   if (!balls.length) return;
 
@@ -339,15 +345,14 @@ function handleInput() {
 
   best.hit = true;
 
-  // 🔥 streak glow boost
-  if (streak >= 5) {
-    target.style.boxShadow = "0 0 100px gold";
+  // glow scales without changing color
+  let glowStrength = Math.min(70 + (streak * 5), 140);
+  if (target.classList.contains("hit")) {
+    target.style.boxShadow = `0 0 ${glowStrength}px lime, inset 0 0 ${glowStrength/2}px lime`;
   }
 
   target.style.transform = "scale(1.1)";
-  setTimeout(() => {
-    target.style.transform = "scale(1)";
-  }, 100);
+  setTimeout(() => target.style.transform = "scale(1)", 100);
 
   updateUI();
 }
