@@ -79,11 +79,6 @@
       pointer-events: none;
     }
 
-    .ball.missed {
-      border: 2px solid red;
-      box-shadow: 0 0 40px red;
-    }
-
     #bottomUI {
       position: fixed;
       bottom: 20px;
@@ -154,48 +149,13 @@ let targetCenter = 0;
 let spawnTimeout;
 let pulseInterval;
 
-let lastLine = "";
+let endingGame = false;
 
-function getRandomLine(list) {
-  let line;
-  do {
-    line = list[Math.floor(Math.random() * list.length)];
-  } while (line === lastLine);
-  lastLine = line;
-  return line;
-}
-
-function randomPerfect() {
-  return getRandomLine([
-    "PERFECT 🔥","NAILED IT 💎","LOCKED IN 🎯",
-    "RIGHT ON TIME ⏱️","CLEAN 🔥","IN THE POCKET 😮‍🔥",
-    "FLAWLESS 🧊","ZERO LATENCY 🧠","YOU BUILT DIFFERENT"
-  ]);
-}
-
-function randomGood() {
-  return getRandomLine([
-    "Nice 👍","Good timing 👌","You cooking 👨‍🍳",
-    "Keep it going 🔥","Almost perfect 👀",
-    "Solid hit 💪","That was smooth"
-  ]);
-}
-
-function randomDiss() {
-  return getRandomLine([
-    "Grandma got more rhythm 👵",
-    "For real? 😐",
-    "Do you even produce?",
-    "Off beat like crazy 😭",
-    "Bro... what was that?",
-    "You just guessing now?",
-    "Timing left the chat"
-  ]);
-}
-
+// START
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
+  endingGame = false;
 
   document.getElementById("startBtn").style.display = "none";
   document.getElementById("stopBtn").style.display = "block";
@@ -214,6 +174,7 @@ function startGame() {
   spawnLoop();
 }
 
+// STOP
 function stopGame() {
   gameStarted = false;
   clearTimeout(spawnTimeout);
@@ -227,9 +188,22 @@ function stopGame() {
   document.getElementById("stopBtn").style.display = "none";
   document.getElementById("restartBtn").style.display = "block";
 
-  document.getElementById("feedback").innerText = "Stopped ⏹";
+  if (!endingGame) {
+    document.getElementById("feedback").innerText = "Stopped ⏹";
+  }
 }
 
+// END GAME (fixed)
+function endGame() {
+  endingGame = true;
+
+  stopGame();
+
+  document.getElementById("feedback").innerText =
+    "Beat Finished 🎵\nScore: " + score + "\nStreak: " + streak;
+}
+
+// RESTART
 function restartGame() {
   score = 0;
   streak = 0;
@@ -238,11 +212,7 @@ function restartGame() {
   startGame();
 }
 
-function endGame() {
-  stopGame();
-  document.getElementById("feedback").innerText = "Beat Finished 🎵";
-}
-
+// PULSE
 function startPulse() {
   let target = document.getElementById("target");
 
@@ -252,6 +222,7 @@ function startPulse() {
   }, beatInterval);
 }
 
+// SPAWN
 function spawnLoop() {
   if (!gameStarted) return;
   spawnBall();
@@ -290,6 +261,7 @@ function spawnBall() {
   animate();
 }
 
+// INPUT (streak FIXED clarity)
 function handleInput() {
   if (!balls.length) return;
 
@@ -319,32 +291,24 @@ function handleInput() {
   let diff = Math.abs(center - targetCenter);
 
   target.classList.remove("hit", "miss");
-  target.style.boxShadow = ""; // reset previous glow
+  target.style.boxShadow = "";
 
   if (diff < 30) {
     score += 100;
     streak++;
-    feedback.innerText = randomPerfect();
+    feedback.innerText = "PERFECT 🔥";
     target.classList.add("hit");
-
-    let glowStrength = Math.min(70 + (streak * 5), 140);
-    target.style.boxShadow = `0 0 ${glowStrength}px lime, inset 0 0 ${glowStrength/2}px lime`;
 
   } else if (diff < 70) {
     score += 50;
     streak++;
-    feedback.innerText = randomGood();
+    feedback.innerText = "Nice 👍";
     target.classList.add("hit");
-
-    let glowStrength = Math.min(70 + (streak * 5), 140);
-    target.style.boxShadow = `0 0 ${glowStrength}px lime, inset 0 0 ${glowStrength/2}px lime`;
 
   } else {
     streak = 0;
-    feedback.innerText = randomDiss();
+    feedback.innerText = "MISS ❌";
     target.classList.add("miss");
-
-    // 🔴 force red glow on miss (this was your missing piece)
     target.style.boxShadow = `0 0 100px red, inset 0 0 40px red`;
   }
 
