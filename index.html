@@ -14,7 +14,7 @@
       background: black;
     }
 
-    /* 🔥 PARALLAX BACKGROUND LAYERS */
+    /* ✅ FIXED BACKGROUND (no stretching) */
     .bg {
       position: fixed;
       width: 100%;
@@ -22,8 +22,9 @@
       top: 0;
       left: 0;
       z-index: -2;
+
       background: url('background.jpg') repeat-y center top;
-      background-size: cover;
+      background-size: auto 100%;
       animation: bgScroll 30s linear infinite;
     }
 
@@ -211,6 +212,7 @@ function startGame() {
 
   document.getElementById("startBtn").style.display = "none";
   document.getElementById("stopBtn").style.display = "block";
+  document.getElementById("restartBtn").style.display = "none";
 
   let rect = document.getElementById("target").getBoundingClientRect();
   targetCenter = rect.top + rect.height / 2;
@@ -227,15 +229,34 @@ function stopGame() {
   gameStarted = false;
   clearTimeout(spawnTimeout);
   clearInterval(pulseInterval);
+
   document.getElementById("beat").pause();
 
   balls.forEach(b => b.el.remove());
   balls = [];
+
+  document.getElementById("startBtn").style.display = "block";
+  document.getElementById("stopBtn").style.display = "none";
+  document.getElementById("restartBtn").style.display = "block";
+
+  document.getElementById("feedback").innerText = "Stopped ⏹";
+}
+
+function restartGame() {
+  score = 0;
+  streak = 0;
+
+  document.getElementById("feedback").innerText = "";
+  document.getElementById("score").innerText = "Score: 0";
+  document.getElementById("streak").innerText = "Streak: 0";
+
+  startGame();
 }
 
 // PULSE
 function startPulse() {
   let target = document.getElementById("target");
+
   pulseInterval = setInterval(() => {
     target.classList.add("pulse");
     setTimeout(() => target.classList.remove("pulse"), 120);
@@ -274,7 +295,7 @@ function spawnBall() {
   animate();
 }
 
-// INPUT (FIXED GLOW)
+// INPUT
 function handleInput() {
   if (!balls.length) return;
 
