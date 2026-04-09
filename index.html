@@ -9,29 +9,24 @@ body {
   margin: 0;
   overflow: hidden;
   font-family: Arial, sans-serif;
-  background: black;
 }
 
-/* Background FIXED */
+/* BACKGROUND */
 #bg {
   position: fixed;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* THIS fixes stretching */
-  z-index: -1;
+  object-fit: cover;
+  z-index: -3;
 }
 
-/* Center circle */
-#circle {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 120px;
-  height: 120px;
-  background: white;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: box-shadow 0.2s, background 0.2s;
+/* DARK OVERLAY (this fixes EVERYTHING visually) */
+#overlay {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.65);
+  z-index: -2;
 }
 
 /* UI */
@@ -40,6 +35,7 @@ body {
   top: 20px;
   left: 20px;
   color: white;
+  z-index: 2;
 }
 
 button {
@@ -48,23 +44,44 @@ button {
   border: none;
   cursor: pointer;
   font-weight: bold;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  border-radius: 6px;
 }
 
+/* CIRCLE (main focus now) */
+#circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 130px;
+  height: 130px;
+  background: white;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  box-shadow: 0 0 25px rgba(255,255,255,0.5);
+  transition: all 0.15s;
+}
+
+/* LEADERBOARD */
 #leaderboard {
   position: absolute;
   right: 20px;
   top: 20px;
   color: white;
   background: rgba(0,0,0,0.7);
-  padding: 10px;
+  padding: 12px;
   border-radius: 8px;
+  z-index: 2;
 }
 </style>
 </head>
 
 <body>
 
-<img id="bg" src="background.jpg">
+<img id="bg" src="bg.jpg">
+<div id="overlay"></div>
 
 <div id="circle"></div>
 
@@ -99,7 +116,6 @@ function startGame() {
   score = 0;
   updateScore();
   gameRunning = true;
-
   beatLoop();
 }
 
@@ -122,40 +138,34 @@ function beatLoop() {
 
   lastBeatTime = Date.now();
 
-  // pulse animation
-  circle.style.background = "#aaa";
+  circle.style.transform = "translate(-50%, -50%) scale(1.2)";
   setTimeout(() => {
-    circle.style.background = "white";
-  }, 100);
+    circle.style.transform = "translate(-50%, -50%) scale(1)";
+  }, 120);
 
   setTimeout(beatLoop, beatInterval);
 }
 
-/* CLICK DETECTION */
 window.addEventListener("click", () => {
   if (!gameRunning) return;
 
-  let now = Date.now();
-  let diff = Math.abs(now - lastBeatTime);
+  let diff = Math.abs(Date.now() - lastBeatTime);
 
   if (diff < 120) {
-    // HIT
     score++;
-    circle.style.boxShadow = "0 0 30px green";
+    circle.style.boxShadow = "0 0 35px lime";
   } else {
-    // MISS
     score--;
-    circle.style.boxShadow = "0 0 30px red";
+    circle.style.boxShadow = "0 0 35px red";
   }
 
   updateScore();
 
   setTimeout(() => {
-    circle.style.boxShadow = "none";
+    circle.style.boxShadow = "0 0 25px rgba(255,255,255,0.5)";
   }, 150);
 });
 
-/* END GAME WHEN SONG ENDS */
 audio.onended = () => {
   gameRunning = false;
   endGame();
@@ -164,24 +174,23 @@ audio.onended = () => {
 function endGame() {
   let name = prompt("Enter your name:");
   if (!name) name = "Unknown Producer";
-
   saveScore(name, score);
 }
 </script>
 
-<!-- 🔥 FIREBASE GOES RIGHT HERE -->
+<!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* 🔥 PASTE YOUR CONFIG HERE */
 const firebaseConfig = {
-  apiKey: "AIzaSyCRfUu0o-FhFgKKPMicjJv9KAb0ivRyciw",
+ apiKey: "AIzaSyCRfUu0o-FhFgKKPMicjJv9KAb0ivRyciw",
   authDomain: "beat-vault-56c5c.firebaseapp.com",
   projectId: "beat-vault-56c5c",
   storageBucket: "beat-vault-56c5c.firebasestorage.app",
   messagingSenderId: "866079824481",
-  appId: "G-5X09NFW6FQ"
+  appId: "1:866079824481:web:d62546d49884926db92820",
+  measurementId: "G-5X09NFW6FQ"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -189,8 +198,8 @@ const db = getFirestore(app);
 
 window.saveScore = async function(name, score) {
   await addDoc(collection(db, "scores"), {
-    name: name,
-    score: score,
+    name,
+    score,
     time: Date.now()
   });
   loadLeaderboard();
@@ -198,12 +207,12 @@ window.saveScore = async function(name, score) {
 
 window.loadLeaderboard = async function() {
   const q = query(collection(db, "scores"), orderBy("score", "desc"), limit(10));
-  const querySnapshot = await getDocs(q);
+  const snapshot = await getDocs(q);
 
   const board = document.getElementById("leaderboard");
   board.innerHTML = "<b>Leaderboard</b><br>";
 
-  querySnapshot.forEach(doc => {
+  snapshot.forEach(doc => {
     let data = doc.data();
     board.innerHTML += `${data.name}: ${data.score}<br>`;
   });
