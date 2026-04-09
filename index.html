@@ -257,10 +257,15 @@ function restartGame() {
 function startPulse() {
   let target = document.getElementById("target");
 
-  pulseInterval = setInterval(() => {
+pulseInterval = setInterval(() => {
+
+  // Only pulse if NOT reacting to a hit/miss
+  if (!target.classList.contains("hit") && !target.classList.contains("miss")) {
     target.classList.add("pulse");
     setTimeout(() => target.classList.remove("pulse"), 120);
-  }, beatInterval);
+  }
+
+}, beatInterval);
 }
 
 // SPAWN
@@ -316,11 +321,9 @@ function handleInput() {
   let target = document.getElementById("target");
   let feedback = document.getElementById("feedback");
 
-  target.classList.remove("hit","miss");
-  target.style.boxShadow = "";
 
   let best = null, smallest = Infinity;
-
+target.classList.remove("hit","miss");
   balls.forEach(b => {
     if (b.hit) return;
     let rect = b.el.getBoundingClientRect();
@@ -343,24 +346,24 @@ function handleInput() {
     feedback.innerText = randomPerfect();
     target.classList.add("hit");
 
-    let glow = Math.min(70 + streak*5,140);
-    target.style.boxShadow = `0 0 ${glow}px lime, inset 0 0 ${glow/2}px lime`;
-
-  } else if (diff < 70) {
+      } else if (diff < 70) {
     score+=50; streak++;
     feedback.innerText = randomGood();
     target.classList.add("hit");
 
-    let glow = Math.min(70 + streak*5,140);
-    target.style.boxShadow = `0 0 ${glow}px lime, inset 0 0 ${glow/2}px lime`;
-
+  
   } else {
     streak=0;
     feedback.innerText = randomDiss();
     target.classList.add("miss");
+    feedback.innerText = "MISS!";
   }
 
   best.hit = true;
+  
+  setTimeout(() => {
+  target.classList.remove("hit","miss");
+}, 150);
 
   target.style.transform = "scale(1.1)";
   setTimeout(()=>target.style.transform="scale(1)",100);
