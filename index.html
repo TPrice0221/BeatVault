@@ -156,7 +156,6 @@ let pulseInterval;
 
 let lastLine = "";
 
-// RANDOM (no repeats)
 function getRandomLine(list) {
   let line;
   do {
@@ -194,7 +193,6 @@ function randomDiss() {
   ]);
 }
 
-// GAME FLOW
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
@@ -242,10 +240,9 @@ function restartGame() {
 
 function endGame() {
   stopGame();
-  document.getElementById("feedback").innerText = "Song Finished 🎵";
+  document.getElementById("feedback").innerText = "Beat Finished 🎵";
 }
 
-// BEAT PULSE
 function startPulse() {
   let target = document.getElementById("target");
 
@@ -255,7 +252,6 @@ function startPulse() {
   }, beatInterval);
 }
 
-// SPAWN
 function spawnLoop() {
   if (!gameStarted) return;
   spawnBall();
@@ -294,7 +290,6 @@ function spawnBall() {
   animate();
 }
 
-// INPUT (closest ball fix)
 function handleInput() {
   if (!balls.length) return;
 
@@ -324,6 +319,7 @@ function handleInput() {
   let diff = Math.abs(center - targetCenter);
 
   target.classList.remove("hit", "miss");
+  target.style.boxShadow = ""; // reset previous glow
 
   if (diff < 30) {
     score += 100;
@@ -331,25 +327,28 @@ function handleInput() {
     feedback.innerText = randomPerfect();
     target.classList.add("hit");
 
+    let glowStrength = Math.min(70 + (streak * 5), 140);
+    target.style.boxShadow = `0 0 ${glowStrength}px lime, inset 0 0 ${glowStrength/2}px lime`;
+
   } else if (diff < 70) {
     score += 50;
     streak++;
     feedback.innerText = randomGood();
     target.classList.add("hit");
 
+    let glowStrength = Math.min(70 + (streak * 5), 140);
+    target.style.boxShadow = `0 0 ${glowStrength}px lime, inset 0 0 ${glowStrength/2}px lime`;
+
   } else {
     streak = 0;
     feedback.innerText = randomDiss();
     target.classList.add("miss");
+
+    // 🔴 force red glow on miss (this was your missing piece)
+    target.style.boxShadow = `0 0 100px red, inset 0 0 40px red`;
   }
 
   best.hit = true;
-
-  // glow scales without changing color
-  let glowStrength = Math.min(70 + (streak * 5), 140);
-  if (target.classList.contains("hit")) {
-    target.style.boxShadow = `0 0 ${glowStrength}px lime, inset 0 0 ${glowStrength/2}px lime`;
-  }
 
   target.style.transform = "scale(1.1)";
   setTimeout(() => target.style.transform = "scale(1)", 100);
