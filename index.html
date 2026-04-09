@@ -1,158 +1,339 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Beat Game</title>
+  <title>Stay On Beat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-body {
-  margin: 0;
-  overflow: hidden;
-  font-family: Arial, sans-serif;
-}
+  <style>
+    body {
+      margin: 0;
+      background: url('background.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      font-family: Arial;
+      text-align: center;
+    }
 
-/* Background (clean, no weird dimming) */
-#bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;
-  z-index: -1;
-}
+    #overlay {
+      background: rgba(0,0,0,0.6);
+      min-height: 100vh;
+      position: relative;
+      padding-top: 30px;
+    }
 
-/* Circle */
-#circle {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 120px;
-  height: 120px;
-  background: white;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 20px rgba(255,255,255,0.4);
-  transition: transform 0.1s, box-shadow 0.1s;
-}
+    h1 { margin-bottom: 10px; }
 
-/* UI */
-#ui {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  color: white;
-}
+    /* FEEDBACK */
+    #feedback {
+      position: absolute;
+      top: 120px;
+      width: 100%;
+      font-size: 28px;
+      font-weight: bold;
+      text-shadow: 0 0 20px white;
+      pointer-events: none;
+    }
 
-button {
-  padding: 10px 15px;
-  margin: 5px;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
-  border-radius: 6px;
-}
-</style>
+    /* CENTER HOLDER */
+    #targetWrapper {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* TARGET */
+    #target {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.2);
+      box-shadow:
+        0 0 25px rgba(255,255,255,0.2),
+        inset 0 0 20px rgba(255,255,255,0.1);
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+
+    #target.hit {
+      box-shadow: 0 0 70px lime, inset 0 0 30px lime;
+    }
+
+    #target.miss {
+      box-shadow: 0 0 70px red, inset 0 0 30px red;
+    }
+
+    /* BALL */
+    .ball {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 2px solid rgba(255,255,255,0.3);
+      box-shadow: 0 0 25px rgba(255,255,255,0.3);
+      pointer-events: none;
+    }
+
+    .ball.missed {
+      border: 2px solid red;
+      box-shadow: 0 0 40px red;
+    }
+
+    /* BOTTOM UI */
+    #bottomUI {
+      position: fixed;
+      bottom: 20px;
+      width: 100%;
+      font-size: 18px;
+    }
+
+    /* START BUTTON */
+    #startBtn {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 14px 28px;
+      font-size: 18px;
+      border-radius: 10px;
+      border: none;
+      z-index: 20;
+    }
+
+    /* FLASH */
+    #flash {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: rgba(255,0,0,0.2);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #flash.active {
+      opacity: 1;
+      transition: opacity 0.1s;
+    }
+
+    /* BEAT INFO */
+    #beatInfo {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      font-size: 12px;
+      opacity: 0.7;
+      text-align: right;
+    }
+  </style>
 </head>
 
 <body>
 
-<img id="background" src="background.jpg">
-
-<div id="circle"></div>
-
-<div id="ui">
-  <button onclick="startGame()">Start</button>
-  <button onclick="stopGame()">Stop</button>
-  <button onclick="restartGame()">Restart</button>
-
-  <div>Score: <span id="score">0</span></div>
-  <div>Beat: "XoXo"</div>
-  <div>Producer: CannaprizeBEATS</div>
+<div id="overlay">
+  <h1>Stay On Beat</h1>
+  <div id="feedback"></div>
 </div>
 
-<audio id="audio" src="beat.mp3"></audio>
+<div id="targetWrapper">
+  <div id="target"></div>
+</div>
+
+<div id="bottomUI">
+  <div id="score">Score: 0</div>
+  <div id="streak">Streak: 0</div>
+</div>
+
+<button id="startBtn" onclick="startGame()">Start</button>
+
+<div id="flash"></div>
+
+<div id="beatInfo">
+  Beat: "XoXo"<br>
+  Producer: CannaprizeBEATS
+</div>
+
+<audio id="beat" src="beat.mp3"></audio>
 
 <script>
-let audio = document.getElementById("audio");
-let circle = document.getElementById("circle");
-
 let bpm = 167;
-let beatInterval = 60000 / bpm;
+let beatInterval = (60000 / bpm) * 2;
 
+let gameStarted = false;
 let score = 0;
-let lastBeatTime = 0;
-let gameRunning = false;
+let streak = 0;
 
-/* START */
+let balls = [];
+let targetCenter = 0;
+
+let perfectWindow = 40;
+let goodWindow = 80;
+
+let lastTap = 0;
+let spawnTimeout;
+
 function startGame() {
+  if (gameStarted) return;
+  gameStarted = true;
+
+  document.getElementById("startBtn").style.display = "none";
+
+  let target = document.getElementById("target");
+  let rect = target.getBoundingClientRect();
+  targetCenter = rect.top + rect.height / 2;
+
+  let audio = document.getElementById("beat");
   audio.currentTime = 0;
   audio.play();
-  score = 0;
-  updateScore();
-  gameRunning = true;
-  beatLoop();
+
+  audio.onended = endGame;
+
+  spawnLoop();
 }
 
-/* STOP */
-function stopGame() {
-  audio.pause();
-  gameRunning = false;
+function spawnLoop() {
+  if (!gameStarted) return;
+
+  spawnBall();
+
+  spawnTimeout = setTimeout(spawnLoop, beatInterval);
 }
 
-/* RESTART */
-function restartGame() {
-  stopGame();
-  startGame();
-}
+function spawnBall() {
+  let ball = document.createElement("div");
+  ball.classList.add("ball");
+  ball.style.top = "-200px";
 
-/* SCORE */
-function updateScore() {
-  document.getElementById("score").innerText = score;
-}
+  document.body.appendChild(ball);
 
-/* BEAT LOOP */
-function beatLoop() {
-  if (!gameRunning) return;
+  let startTime = Date.now();
+  let duration = beatInterval;
 
-  lastBeatTime = Date.now();
+  let obj = { el: ball, hit: false };
+  balls.push(obj);
 
-  // Pulse animation
-  circle.style.transform = "translate(-50%, -50%) scale(1.25)";
-  setTimeout(() => {
-    circle.style.transform = "translate(-50%, -50%) scale(1)";
-  }, 120);
+  function animate() {
+    let now = Date.now();
+    let progress = (now - startTime) / duration;
 
-  setTimeout(beatLoop, beatInterval);
-}
+    let endY = targetCenter - (ball.offsetHeight / 2);
+    let y = progress * (endY + 200);
+    ball.style.top = y + "px";
 
-/* CLICK TIMING */
-window.addEventListener("click", () => {
-  if (!gameRunning) return;
+    let rect = ball.getBoundingClientRect();
+    let center = rect.top + rect.height / 2;
 
-  let diff = Math.abs(Date.now() - lastBeatTime);
+    if (!obj.hit && center > targetCenter + goodWindow) {
+      obj.hit = true;
+      ball.classList.add("missed");
+      streak = 0;
+      punish();
+      updateUI();
+    }
 
-  if (diff < 130) {
-    // HIT
-    score++;
-    circle.style.boxShadow = "0 0 30px lime";
-  } else {
-    // MISS
-    score--;
-    circle.style.boxShadow = "0 0 30px red";
+    if (progress >= 1.3) {
+      ball.remove();
+      balls = balls.filter(b => b !== obj);
+      return;
+    }
+
+    requestAnimationFrame(animate);
   }
 
-  updateScore();
+  animate();
+}
 
-  setTimeout(() => {
-    circle.style.boxShadow = "0 0 20px rgba(255,255,255,0.4)";
-  }, 120);
-});
+function handleInput() {
+  let now = Date.now();
+  if (now - lastTap < 200) return;
+  lastTap = now;
 
-/* END GAME WHEN SONG ENDS */
-audio.onended = () => {
-  gameRunning = false;
-};
+  if (!balls.length) return;
+
+  let target = document.getElementById("target");
+  let feedback = document.getElementById("feedback");
+
+  let best = null;
+  let smallestDiff = Infinity;
+
+  balls.forEach(b => {
+    let rect = b.el.getBoundingClientRect();
+    let center = rect.top + rect.height / 2;
+    let diff = Math.abs(center - targetCenter);
+
+    if (diff < smallestDiff) {
+      smallestDiff = diff;
+      best = b;
+    }
+  });
+
+  if (!best || best.hit) return;
+
+  target.classList.remove("hit", "miss");
+
+  if (smallestDiff < perfectWindow) {
+    score += 100;
+    streak++;
+    feedback.innerText = "PERFECT 🔥";
+    target.classList.add("hit");
+    best.hit = true;
+
+  } else if (smallestDiff < goodWindow) {
+    score += 50;
+    streak++;
+    feedback.innerText = "Good 👍";
+    target.classList.add("hit");
+    best.hit = true;
+
+  } else {
+    streak = 0;
+    feedback.innerText = randomInsult();
+    target.classList.add("miss");
+    best.hit = true;
+    punish();
+  }
+
+  /* SAFE SCALE (no movement) */
+  target.style.transform = "scale(1.1)";
+  setTimeout(() => target.style.transform = "scale(1)", 100);
+
+  updateUI();
+}
+
+function updateUI() {
+  document.getElementById("score").innerText = "Score: " + score;
+  document.getElementById("streak").innerText = "Streak: " + streak;
+}
+
+function punish() {
+  let flash = document.getElementById("flash");
+  flash.classList.add("active");
+  setTimeout(() => flash.classList.remove("active"), 100);
+}
+
+function randomInsult() {
+  let lines = [
+    "ahh man",
+    "too late bro",
+    "do you even produce?",
+    "off beat 😭"
+  ];
+  return lines[Math.floor(Math.random() * lines.length)];
+}
+
+document.addEventListener("pointerdown", handleInput);
+
+function endGame() {
+  gameStarted = false;
+
+  clearTimeout(spawnTimeout);
+
+  balls.forEach(b => b.el.remove());
+  balls = [];
+
+  document.getElementById("startBtn").style.display = "block";
+  document.getElementById("feedback").innerText = "Song Finished 🎵";
+}
 </script>
 
 </body>
