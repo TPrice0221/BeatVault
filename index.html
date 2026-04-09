@@ -303,8 +303,11 @@ if (progress > 1.3) {
   balls = balls.filter(b => b !== obj);
   return;
 }
-  animate();
+
+requestAnimationFrame(animate);
 }
+
+animate();
 
 // INPUT
 function handleInput() {
