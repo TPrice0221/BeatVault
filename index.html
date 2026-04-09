@@ -34,6 +34,7 @@
       font-size: 28px;
       font-weight: bold;
       text-shadow: 0 0 20px white;
+      white-space: pre-line;
     }
 
     #targetWrapper {
@@ -149,7 +150,46 @@ let targetCenter = 0;
 let spawnTimeout;
 let pulseInterval;
 
+let lastLine = "";
 let endingGame = false;
+
+// RANDOM (unchanged)
+function getRandomLine(list) {
+  let line;
+  do {
+    line = list[Math.floor(Math.random() * list.length)];
+  } while (line === lastLine);
+  lastLine = line;
+  return line;
+}
+
+function randomPerfect() {
+  return getRandomLine([
+    "PERFECT 🔥","NAILED IT 💎","LOCKED IN 🎯",
+    "RIGHT ON TIME ⏱️","CLEAN 🔥","IN THE POCKET 😮‍🔥",
+    "FLAWLESS 🧊","ZERO LATENCY 🧠","YOU BUILT DIFFERENT"
+  ]);
+}
+
+function randomGood() {
+  return getRandomLine([
+    "Nice 👍","Good timing 👌","You cooking 👨‍🍳",
+    "Keep it going 🔥","Almost perfect 👀",
+    "Solid hit 💪","That was smooth"
+  ]);
+}
+
+function randomDiss() {
+  return getRandomLine([
+    "Grandma got more rhythm 👵",
+    "For real? 😐",
+    "Do you even produce?",
+    "Off beat like crazy 😭",
+    "Bro... what was that?",
+    "You just guessing now?",
+    "Timing left the chat"
+  ]);
+}
 
 // START
 function startGame() {
@@ -196,7 +236,6 @@ function stopGame() {
 // END GAME (fixed)
 function endGame() {
   endingGame = true;
-
   stopGame();
 
   document.getElementById("feedback").innerText =
@@ -261,7 +300,7 @@ function spawnBall() {
   animate();
 }
 
-// INPUT (streak FIXED clarity)
+// INPUT (ONLY FIXED LOGIC)
 function handleInput() {
   if (!balls.length) return;
 
@@ -296,19 +335,26 @@ function handleInput() {
   if (diff < 30) {
     score += 100;
     streak++;
-    feedback.innerText = "PERFECT 🔥";
+    feedback.innerText = randomPerfect();
     target.classList.add("hit");
+
+    let glowStrength = Math.min(70 + (streak * 5), 140);
+    target.style.boxShadow = `0 0 ${glowStrength}px lime, inset 0 0 ${glowStrength/2}px lime`;
 
   } else if (diff < 70) {
     score += 50;
     streak++;
-    feedback.innerText = "Nice 👍";
+    feedback.innerText = randomGood();
     target.classList.add("hit");
+
+    let glowStrength = Math.min(70 + (streak * 5), 140);
+    target.style.boxShadow = `0 0 ${glowStrength}px lime, inset 0 0 ${glowStrength/2}px lime`;
 
   } else {
     streak = 0;
-    feedback.innerText = "MISS ❌";
+    feedback.innerText = randomDiss();
     target.classList.add("miss");
+
     target.style.boxShadow = `0 0 100px red, inset 0 0 40px red`;
   }
 
