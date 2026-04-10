@@ -44,17 +44,6 @@
       transform: translate(-50%, -50%);
     }
 
-    /* 🔥 HIT LINE */
-    #hitLine {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 220px;
-      height: 2px;
-      background: rgba(255,255,255,0.4);
-      transform: translate(-50%, -50%);
-    }
-
     #target {
       width: 180px;
       height: 180px;
@@ -129,7 +118,6 @@
 </div>
 
 <div id="targetWrapper">
-  <div id="hitLine"></div>
   <div id="target"></div>
 </div>
 
@@ -169,42 +157,41 @@ let pulseInterval;
 let lastLine = "";
 let endingGame = false;
 
-/* RANDOM (unchanged) */
-function getRandomLine(list) {
-  let line;
-  do {
-    line = list[Math.floor(Math.random() * list.length)];
-  } while (line === lastLine);
-  lastLine = line;
-  return line;
-}
-
+/* 🔥 CRAZY PRAISE */
 function randomPerfect() {
-  return getRandomLine([
-    "PERFECT 🔥","NAILED IT 💎","LOCKED IN 🎯",
-    "RIGHT ON TIME ⏱️","CLEAN 🔥","IN THE POCKET 😮‍🔥",
-    "FLAWLESS 🧊","ZERO LATENCY 🧠","YOU BUILT DIFFERENT"
-  ]);
+  const lines = [
+    "PERFECT 🔥","YOU BUILT DIFFERENT 😤","ABSOLUTE MONSTER",
+    "NASTY WORK 🤯","UNTOUCHABLE 💎","ZERO LATENCY 🧠",
+    "TIMING GOD 🛐","LOCKED IN 🎯","ILLEGAL RHYTHM 😈",
+    "WHO TAUGHT YOU THIS??","DISGUSTING SKILL 🔥"
+  ];
+  return lines[Math.floor(Math.random() * lines.length)];
 }
 
 function randomGood() {
-  return getRandomLine([
-    "Nice 👍","Good timing 👌","You cooking 👨‍🍳",
-    "Keep it going 🔥","Almost perfect 👀",
-    "Solid hit 💪","That was smooth"
-  ]);
+  const lines = [
+    "Nice 👍","You cooking 👨‍🍳","Smooth 👌",
+    "Okay I see you 👀","Solid hit 💪","Keep going 🔥",
+    "Almost perfect 😮‍🔥","That was clean"
+  ];
+  return lines[Math.floor(Math.random() * lines.length)];
 }
 
+/* 🔥 DIABOLICAL DISSES */
 function randomDiss() {
-  return getRandomLine([
+  const lines = [
     "Grandma got more rhythm 👵",
-    "For real? 😐",
-    "Do you even produce?",
-    "Off beat like crazy 😭",
-    "Bro... what was that?",
     "You just guessing now?",
-    "Timing left the chat"
-  ]);
+    "Timing left the chat",
+    "Bro… uninstall",
+    "You missed that on purpose?",
+    "That was painful to watch",
+    "Rhythm is optional for you huh",
+    "The beat is crying rn 😭",
+    "Even the metronome gave up",
+    "You fighting the beat and losing"
+  ];
+  return lines[Math.floor(Math.random() * lines.length)];
 }
 
 /* START */
@@ -248,7 +235,7 @@ function stopGame() {
   }
 }
 
-/* END GAME */
+/* END */
 function endGame() {
   endingGame = true;
   stopGame();
@@ -357,7 +344,7 @@ function handleInput() {
 
   } else {
     streak = 0;
-    feedback.innerText = "MISS!";
+    feedback.innerText = randomDiss();
     target.classList.add("miss");
 
     document.body.style.background = "#220000";
