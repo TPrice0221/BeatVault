@@ -1,50 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Stay On Beat</title>
+  <title>Tap the Green Circle on beat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body {
       margin: 0;
+      background: url('background.jpg') repeat-y center top;
+      background-size: cover;
       color: white;
       font-family: Arial;
       text-align: center;
-      overflow: hidden;
-      background: black;
+      animation: bgMove 25s linear infinite;
     }
 
-    .bg {
-      position: fixed;
-      width: 100%;
-      height: 150%;
-      top: 0;
-      left: 0;
-      z-index: -2;
-      background: url('background.jpg') repeat-y center top;
-      background-size: auto 100%;
-      animation: bgScroll 30s linear infinite;
-    }
-
-    .bgGlow {
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      z-index: -1;
-      background: radial-gradient(circle at center, rgba(0,255,255,0.08), transparent 60%);
-      animation: glowPulse 4s ease-in-out infinite;
-    }
-
-    @keyframes bgScroll {
-      0% { transform: translateY(0); }
-      100% { transform: translateY(-300px); }
-    }
-
-    @keyframes glowPulse {
-      0%,100% { opacity: 0.3; }
-      50% { opacity: 0.7; }
+    @keyframes bgMove {
+      0% { background-position: center 0px; }
+      100% { background-position: center 300px; }
     }
 
     #overlay {
@@ -61,6 +34,7 @@
       font-size: 28px;
       font-weight: bold;
       text-shadow: 0 0 20px white;
+      white-space: pre-line;
     }
 
     #targetWrapper {
@@ -70,7 +44,7 @@
       transform: translate(-50%, -50%);
     }
 
-    /* 🔥 NEW HIT LINE */
+    /* 🔥 HIT LINE */
     #hitLine {
       position: absolute;
       top: 50%;
@@ -149,20 +123,21 @@
 
 <body>
 
-<div class="bg"></div>
-<div class="bgGlow"></div>
-
 <div id="overlay">
   <h1>Stay On Beat</h1>
   <div id="feedback"></div>
 </div>
 
 <div id="targetWrapper">
-  <div id="hitLine"></div> <!-- 🔥 ADDED -->
+  <div id="hitLine"></div>
   <div id="target"></div>
 </div>
 
 <div id="bottomUI">
+  <div id="leaderboard" style="margin-top:10px; font-size:14px;">
+    <b>Top Scores</b>
+    <div id="leaderboardList"></div>
+  </div>
   <div id="score">Score: 0</div>
   <div id="streak">Streak: 0</div>
 </div>
@@ -192,8 +167,9 @@ let spawnTimeout;
 let pulseInterval;
 
 let lastLine = "";
+let endingGame = false;
 
-// RANDOM
+/* RANDOM (unchanged) */
 function getRandomLine(list) {
   let line;
   do {
@@ -204,21 +180,38 @@ function getRandomLine(list) {
 }
 
 function randomPerfect() {
-  return getRandomLine(["PERFECT 🔥","LOCKED IN 🎯","FLAWLESS 🧊","YOU BUILT DIFFERENT"]);
+  return getRandomLine([
+    "PERFECT 🔥","NAILED IT 💎","LOCKED IN 🎯",
+    "RIGHT ON TIME ⏱️","CLEAN 🔥","IN THE POCKET 😮‍🔥",
+    "FLAWLESS 🧊","ZERO LATENCY 🧠","YOU BUILT DIFFERENT"
+  ]);
 }
 
 function randomGood() {
-  return getRandomLine(["Nice 👍","Good timing 👌","You cooking 👨‍🍳"]);
+  return getRandomLine([
+    "Nice 👍","Good timing 👌","You cooking 👨‍🍳",
+    "Keep it going 🔥","Almost perfect 👀",
+    "Solid hit 💪","That was smooth"
+  ]);
 }
 
 function randomDiss() {
-  return getRandomLine(["Grandma got more rhythm 👵","Do you even produce?","Timing left the chat"]);
+  return getRandomLine([
+    "Grandma got more rhythm 👵",
+    "For real? 😐",
+    "Do you even produce?",
+    "Off beat like crazy 😭",
+    "Bro... what was that?",
+    "You just guessing now?",
+    "Timing left the chat"
+  ]);
 }
 
-// GAME FLOW
+/* START */
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
+  endingGame = false;
 
   document.getElementById("startBtn").style.display = "none";
   document.getElementById("stopBtn").style.display = "block";
@@ -230,16 +223,17 @@ function startGame() {
   let audio = document.getElementById("beat");
   audio.currentTime = 0;
   audio.play();
+  audio.onended = endGame;
 
   startPulse();
   spawnLoop();
 }
 
+/* STOP */
 function stopGame() {
   gameStarted = false;
   clearTimeout(spawnTimeout);
   clearInterval(pulseInterval);
-
   document.getElementById("beat").pause();
 
   balls.forEach(b => b.el.remove());
@@ -249,21 +243,32 @@ function stopGame() {
   document.getElementById("stopBtn").style.display = "none";
   document.getElementById("restartBtn").style.display = "block";
 
-  document.getElementById("feedback").innerText = "Stopped ⏹";
+  if (!endingGame) {
+    document.getElementById("feedback").innerText = "Stopped ⏹";
+  }
 }
 
+/* END GAME */
+function endGame() {
+  endingGame = true;
+  stopGame();
+
+  document.getElementById("feedback").innerText =
+    "Beat Finished 🎵\nScore: " + score + "\nStreak: " + streak;
+
+  saveScore(score);
+}
+
+/* RESTART */
 function restartGame() {
   score = 0;
   streak = 0;
-
+  updateUI();
   document.getElementById("feedback").innerText = "";
-  document.getElementById("score").innerText = "Score: 0";
-  document.getElementById("streak").innerText = "Streak: 0";
-
   startGame();
 }
 
-// PULSE
+/* PULSE */
 function startPulse() {
   let target = document.getElementById("target");
 
@@ -273,7 +278,7 @@ function startPulse() {
   }, beatInterval);
 }
 
-// SPAWN
+/* SPAWN */
 function spawnLoop() {
   if (!gameStarted) return;
   spawnBall();
@@ -286,28 +291,16 @@ function spawnBall() {
   ball.style.top = "-200px";
   document.body.appendChild(ball);
 
-  let start = Date.now();
+  let startTime = Date.now();
   let obj = { el: ball, hit: false };
   balls.push(obj);
 
   function animate() {
-    let progress = (Date.now() - start) / beatInterval;
-    let endY = targetCenter - 90;
+    let progress = (Date.now() - startTime) / beatInterval;
+    let endY = targetCenter - (ball.offsetHeight / 2);
     ball.style.top = (progress * (endY + 200)) + "px";
 
-    if (progress > 1.3) {
-      if (!obj.hit) {
-        streak = 0;
-        document.getElementById("feedback").innerText = "MISS!";
-        document.body.style.background = "#220000";
-        setTimeout(() => document.body.style.background = "black", 100);
-
-        let target = document.getElementById("target");
-        target.classList.add("miss");
-
-        setTimeout(() => target.classList.remove("miss"), 200);
-      }
-
+    if (progress >= 1.3) {
       ball.remove();
       balls = balls.filter(b => b !== obj);
       return;
@@ -319,24 +312,25 @@ function spawnBall() {
   animate();
 }
 
-// INPUT
+/* INPUT */
 function handleInput() {
   if (!balls.length) return;
 
   let target = document.getElementById("target");
   let feedback = document.getElementById("feedback");
 
-  target.classList.remove("hit","miss");
-
-  let best = null, smallest = Infinity;
+  let best = null;
+  let smallestDiff = Infinity;
 
   balls.forEach(b => {
     if (b.hit) return;
+
     let rect = b.el.getBoundingClientRect();
-    let center = rect.top + rect.height/2;
+    let center = rect.top + rect.height / 2;
     let diff = Math.abs(center - targetCenter);
-    if (diff < smallest) {
-      smallest = diff;
+
+    if (diff < smallestDiff) {
+      smallestDiff = diff;
       best = b;
     }
   });
@@ -344,51 +338,76 @@ function handleInput() {
   if (!best) return;
 
   let rect = best.el.getBoundingClientRect();
-  let center = rect.top + rect.height/2;
+  let center = rect.top + rect.height / 2;
   let diff = Math.abs(center - targetCenter);
 
+  target.classList.remove("hit", "miss");
+
   if (diff < 25) {
-    score+=100; streak++;
+    score += 100;
+    streak++;
     feedback.innerText = randomPerfect();
     target.classList.add("hit");
 
   } else if (diff < 60) {
-    score+=50; streak++;
+    score += 50;
+    streak++;
     feedback.innerText = randomGood();
     target.classList.add("hit");
 
   } else {
-    streak=0;
+    streak = 0;
     feedback.innerText = "MISS!";
+    target.classList.add("miss");
+
     document.body.style.background = "#220000";
     setTimeout(() => document.body.style.background = "black", 100);
-    target.classList.add("miss");
   }
 
   best.hit = true;
 
-  // 🔥 SCORE POP
   let scoreEl = document.getElementById("score");
   scoreEl.style.transform = "scale(1.2)";
   setTimeout(() => scoreEl.style.transform = "scale(1)", 100);
 
-  setTimeout(() => {
-    target.classList.remove("hit","miss");
-  }, 150);
-
   target.style.transform = "scale(1.1)";
-  setTimeout(()=>target.style.transform="scale(1)",100);
+  setTimeout(() => target.style.transform = "scale(1)", 100);
 
-  document.getElementById("score").innerText="Score: "+score;
-  document.getElementById("streak").innerText="Streak: "+streak;
+  updateUI();
+}
+
+/* UI */
+function updateUI() {
+  document.getElementById("score").innerText = "Score: " + score;
+  document.getElementById("streak").innerText = "Streak: " + streak;
+}
+
+/* LEADERBOARD */
+function saveScore(finalScore) {
+  let name = prompt("Enter your name:");
+  if (!name) name = "Anonymous";
+
+  let scores = JSON.parse(localStorage.getItem("beatVaultScores")) || [];
+
+  scores.push({ name, score: finalScore });
+  scores.sort((a, b) => b.score - a.score);
+  scores = scores.slice(0, 5);
+
+  localStorage.setItem("beatVaultScores", JSON.stringify(scores));
+  renderLeaderboard();
+}
+
+function renderLeaderboard() {
+  let list = document.getElementById("leaderboardList");
+  let scores = JSON.parse(localStorage.getItem("beatVaultScores")) || [];
+
+  list.innerHTML = scores.map((s, i) =>
+    `${i+1}. ${s.name} - ${s.score}`
+  ).join("<br>");
 }
 
 document.addEventListener("pointerdown", handleInput);
-
-document.getElementById("beat").onended = () => {
-  stopGame();
-  document.getElementById("feedback").innerText = "Beat Finished, You rock! 🎵";
-};
+renderLeaderboard();
 </script>
 
 </body>
